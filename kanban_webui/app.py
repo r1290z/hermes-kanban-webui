@@ -29,6 +29,17 @@ def _split_host(value: str) -> str:
     return host.rsplit(":", 1)[0].strip().rstrip(".").lower()
 
 
+def _any_host_allowed() -> bool:
+    """``*`` opts out of Host checking — for a reverse proxy that already pins the name.
+
+    DNS rebinding needs a hostile name resolving to this box; behind TLS on a fixed
+    public hostname that is no longer the threat model, and the token still guards
+    the API.
+    """
+    raw = os.environ.get("HERMES_KANBAN_WEBUI_ALLOWED_HOSTS", "")
+    return any(item.strip() == "*" for item in raw.split(","))
+
+
 def _allowed_hostnames(settings) -> set[str]:
     raw = os.environ.get("HERMES_KANBAN_WEBUI_ALLOWED_HOSTS", "")
     names = {"localhost", "testserver", "127.0.0.1", "::1"}
@@ -42,6 +53,8 @@ def _allowed_hostnames(settings) -> set[str]:
 
 
 def _host_allowed(request: Request, settings) -> bool:
+    if _any_host_allowed():
+        return True
     host = _split_host(request.headers.get("host") or request.url.netloc)
     if not host:
         return False

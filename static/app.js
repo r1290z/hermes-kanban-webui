@@ -1,14 +1,78 @@
-import { api } from './api.js?v=20261029-08';
-import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-08';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-08';
-import { renderBoard, renderKpis } from './board.js?v=20261029-08';
-import { setupDependencyControls } from './dependency-lines.js?v=20261029-08';
-import { setupForms } from './forms.js?v=20261029-08';
-import { setupMobileFallback } from './mobile.js?v=20261029-08';
-import { setupAppUpdatePrompt } from './update.js?v=20261029-08';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-08';
-import { closeDrawer } from './drawer.js?v=20261029-08';
-import { state, setBoard, toast } from './state.js?v=20261029-08';
+import { api } from './api.js?v=20261029-11';
+import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-11';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-11';
+import { renderBoard, renderKpis } from './board.js?v=20261029-11';
+import { setupDependencyControls } from './dependency-lines.js?v=20261029-11';
+import { setupForms } from './forms.js?v=20261029-11';
+import { setupMobileFallback } from './mobile.js?v=20261029-11';
+import { setupAppUpdatePrompt } from './update.js?v=20261029-11';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-11';
+import { closeDrawer } from './drawer.js?v=20261029-11';
+import { state, setBoard, toast } from './state.js?v=20261029-11';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261029-11';
+
+let boardStatusSelect = null;
+let boardStatusFilter = [];
+
+const VIEWS = ['board', 'list', 'log'];
+
+function currentView() {
+  const raw = (location.hash || '').replace(/^#/, '').trim();
+  const [key, value] = raw.split('=');
+  const view = key === 'view' ? value : raw;
+  return VIEWS.includes(view) ? view : 'board';
+}
+
+function applyView(view, { updateHash = true } = {}) {
+  const active = VIEWS.includes(view) ? view : 'board';
+  VIEWS.forEach(name => {
+    const section = document.getElementById(`view${name[0].toUpperCase()}${name.slice(1)}`);
+    if (section) section.hidden = name !== active;
+  });
+  document.querySelectorAll('#viewSwitch [data-view]').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.view === active);
+    btn.setAttribute('aria-selected', String(btn.dataset.view === active));
+  });
+  if (updateHash && currentView() !== active) {
+    history.replaceState(null, '', `#view=${active}`);
+  }
+  if (active === 'list') loadList();
+  return active;
+}
+
+function setupViewSwitch() {
+  document.getElementById('viewSwitch')?.addEventListener('click', ev => {
+    const btn = ev.target.closest('[data-view]');
+    if (!btn) return;
+    const view = btn.dataset.view;
+    history.replaceState(null, '', `#view=${view}`);
+    applyView(view, { updateHash: false });
+  });
+  window.addEventListener('hashchange', () => applyView(currentView(), { updateHash: false }));
+  applyView(currentView(), { updateHash: false });
+}
+
+function setupBoardStatusFilter() {
+  const host = document.getElementById('statusFilter');
+  if (!host) return;
+  boardStatusSelect = createMultiSelect(host, {
+    label: t('status'),
+    options: [],
+    onChange: values => {
+      boardStatusFilter = values;
+      renderBoardColumns();
+    }
+  });
+}
+
+function renderBoardColumns() {
+  const data = state.data;
+  if (!data) return;
+  const filtered = boardStatusFilter.length
+    ? { ...data, column_order: (data.column_order || []).filter(status => boardStatusFilter.includes(status)) }
+    : data;
+  renderBoard(filtered);
+}
 
 async function loadBoards() {
   const data = await api.boards();
@@ -90,9 +154,13 @@ export async function load() {
   document.getElementById('boardTitle').textContent = data.board_meta.name || data.board;
   document.getElementById('boardDescription').textContent = data.board_meta.description || t('boardDescription');
   renderKpis(data);
-  renderBoard(data);
+  renderBoardColumns();
+  if (boardStatusSelect) {
+    boardStatusSelect.setOptions((data.column_order || []).map(status => ({ value: status, label: t(status) })));
+  }
   await refreshOperationsPanel();
   await loadStatus();
+  if (currentView() === 'list') loadList();
 }
 
 function setupControls() {
@@ -139,6 +207,9 @@ async function main() {
   applyI18n();
   setupThemeToggle();
   setupControls();
+  setupViewSwitch();
+  setupBoardStatusFilter();
+  setupListView();
   setupDependencyControls();
   setupForms(load);
   setupMobileFallback();

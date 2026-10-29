@@ -268,3 +268,66 @@ textarea { width: 100%; resize: vertical; }
   .dependency-mini-current > span { display: none; }
   .monitor-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ===== View switcher (board / list / log) ===== */
+.view-switch { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.view-switch .button { padding: 6px 14px; }
+#viewLog, #viewList { margin-top: 16px; }
+.empty-view { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); padding: 48px 24px; text-align: center; }
+.empty-view h2 { margin: 0 0 8px; }
+#viewList .toolbar { margin-top: 0; }
+
+/* ===== Multiselect (details/summary + checkboxes) ===== */
+.multiselect { position: relative; display: inline-flex; min-width: 0; max-width: 100%; }
+.multiselect-box { position: relative; }
+.multiselect-box > summary { list-style: none; cursor: pointer; user-select: none; white-space: nowrap; }
+.multiselect-box > summary::-webkit-details-marker { display: none; }
+.multiselect-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); padding: 8px; display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; min-width: 160px; max-width: min(280px, 80vw); }
+.multiselect-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.multiselect-item:hover { background: var(--faint); }
+.multiselect-item input { margin: 0; flex: none; }
+
+/* ===== Task list view ===== */
+.list-wrap { margin-top: 16px; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); overflow: hidden; }
+.list-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.list-table th, .list-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--hairline); overflow-wrap: anywhere; min-width: 0; }
+.list-table thead th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); position: sticky; top: 0; background: var(--surface); }
+.list-th .list-sort { all: unset; cursor: pointer; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; }
+.list-th.is-active { color: var(--link); }
+.list-th:nth-child(4) { width: auto; }
+.list-table th:nth-child(1), .list-table th:nth-child(2), .list-table th:nth-child(3) { width: 12%; }
+.list-table th:nth-child(5) { width: 8%; }
+.list-table th:nth-child(6), .list-table th:nth-child(7) { width: 11%; }
+.list-table th:nth-child(8), .list-table th:nth-child(9), .list-table th:nth-child(10) { width: 6%; }
+.list-row { cursor: pointer; }
+.list-row:hover { background: var(--faint); }
+.list-status { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.list-id { display: block; font-size: 10px; color: var(--muted); }
+.list-title { display: block; }
+.list-count { text-align: right; font-variant-numeric: tabular-nums; }
+.list-date { white-space: nowrap; color: var(--muted); font-size: 12px; }
+.list-empty-row td { padding: 32px; text-align: center; color: var(--muted); }
+.list-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 4px 0; }
+.list-counts-mobile { display: none; }
+
+/* Mobile: rows become cards — no sideways scroll at 390px. */
+@media (max-width: 700px) {
+  .list-table, .list-table tbody, .list-table tr, .list-table td { display: block; width: 100%; }
+  .list-table thead { display: none; }
+  .list-wrap { border-radius: 14px; }
+  .list-row { border-bottom: 1px solid var(--hairline); padding: 6px 0; }
+  .list-row td { border: 0; padding: 3px 12px; }
+  /* Card layout: title, status, assignee, counters — priority/tenant/dates are hidden. */
+  .list-row td:nth-child(3), .list-row td:nth-child(5), .list-row td:nth-child(6), .list-row td:nth-child(7) { display: none; }
+  /* tr/td display:block above has higher specificity than bare classes, so the
+     card rules below need element+class selectors to win. */
+  tr.list-row { display: flex; flex-direction: column; }
+  .list-row td:nth-child(1) { order: 2; }
+  .list-row td:nth-child(2) { order: 3; }
+  .list-row td:nth-child(4) { order: 1; }
+  .list-row td:nth-child(8), .list-row td:nth-child(9), .list-row td:nth-child(10) { display: none; }
+  td.list-counts-mobile { display: flex; order: 4; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 11px; padding: 3px 12px; }
+  td.list-counts-mobile b { color: var(--muted); font-weight: 600; }
+  #listSearch { width: 100%; }
+  .multiselect-panel { left: auto; right: 0; }
+}

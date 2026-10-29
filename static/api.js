@@ -12,7 +12,9 @@ function absorbFragmentToken() {
   if (!match) return;
   const token = decodeURIComponent(match[1]).trim();
   if (token) localStorage.setItem('kanbanToken', token);
-  history.replaceState(null, '', location.pathname + location.search);
+  // Keep any other fragment state (e.g. #view=list) when scrubbing the token.
+  const rest = hash.slice(1).split('&').filter(part => part && !part.startsWith('token=')).join('&');
+  history.replaceState(null, '', location.pathname + location.search + (rest ? `#${rest}` : ''));
 }
 
 absorbFragmentToken();
@@ -110,6 +112,14 @@ export const api = {
   reviseWorkflowDraft: (board, draftId, payload) => request(`/api/workflows/drafts/${encodeURIComponent(draftId)}/revise?${boardQuery(board)}`, { method: 'POST', body: payload }),
   instantiateWorkflowDraft: (board, draftId, payload = {}) => request(`/api/workflows/drafts/${encodeURIComponent(draftId)}/instantiate?${boardQuery(board)}`, { method: 'POST', body: payload }),
   workflowInstance: (board, instanceId) => request(`/api/workflows/instances/${encodeURIComponent(instanceId)}?${boardQuery(board)}`),
+  list: params => {
+    const clean = {};
+    for (const [key, value] of Object.entries(params || {})) {
+      if (value !== undefined && value !== null && value !== '') clean[key] = value;
+    }
+    const query = new URLSearchParams(clean).toString();
+    return request(query ? `/api/list?${query}` : '/api/list');
+  },
   board: params => {
     const clean = {};
     for (const [key, value] of Object.entries(params || {})) {

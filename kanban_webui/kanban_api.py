@@ -1075,6 +1075,137 @@ def board_table(board: Optional[str] = Query(None), include_archived: bool = Que
     return {"board": payload["board"], "rows": payload["tasks"], "stats": payload["stats"]}
 
 
+LIST_SORT_COLUMNS = {
+    "created": "t.created_at",
+    "updated": "updated_at",
+    "priority": "t.priority",
+    "title": "t.title",
+    "status": "t.status",
+}
+
+
+def _csv_set(value: Optional[str]) -> list[str]:
+    """Split a comma separated query value into a clean list of items."""
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _like_pattern(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
+@router.get("/list")
+def list_tasks(
+    assignee: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    q: Optional[str] = Query(None),
+    archived: int = Query(0),
+    sort: str = Query("created"),
+    dir: str = Query("desc"),
+    limit: int = Query(200, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    board: Optional[str] = Query(None),
+) -> dict[str, Any]:
+    """Flat, filterable task list.
+
+    Reads go straight to SQLite (read-only SELECTs); writes stay behind
+    ``hermes_cli.kanban_db``.
+    """
+    selected = _resolve_board(board)
+    sort_key = sort if sort in LIST_SORT_COLUMNS else "created"
+    order = "ASC" if str(dir).lower() == "asc" else "DESC"
+    order_by = f"{LIST_SORT_COLUMNS[sort_key]} {order}"
+
+    assignees = _csv_set(assignee)
+    statuses = _csv_set(status)
+    query = (q or "").strip()
+
+    where: list[str] = []
+    params: list[Any] = []
+    if assignees:
+        where.append(f"t.assignee IN ({','.join('?' * len(assignees))})")
+        params.extend(assignees)
+    if statuses:
+        where.append(f"t.status IN ({','.join('?' * len(statuses))})")
+        params.extend(statuses)
+    if not int(archived):
+        where.append("t.status != 'archived'")
+    if query:
+        where.append("(LOWER(t.title) LIKE ? ESCAPE '\\' OR LOWER(COALESCE(t.body,'')) LIKE ? ESCAPE '\\')")
+        pattern = _like_pattern(query.lower())
+        params.extend([pattern, pattern])
+
+    where_sql = f" WHERE {' AND '.join(where)}" if where else ""
+
+    conn = _conn(selected)
+    try:
+        total = int(conn.execute(f"SELECT COUNT(*) AS n FROM tasks t{where_sql}", params).fetchone()["n"])
+
+        rows = conn.execute(
+            f"""
+            SELECT
+                t.id, t.title, t.status, t.assignee, t.priority, t.tenant, t.created_at,
+                MAX(
+                    COALESCE(t.created_at, 0),
+                    COALESCE(t.started_at, 0),
+                    COALESCE(t.completed_at, 0),
+                    COALESCE((SELECT MAX(e.created_at) FROM task_events e WHERE e.task_id = t.id), 0),
+                    COALESCE((SELECT MAX(c.created_at) FROM task_comments c WHERE c.task_id = t.id), 0)
+                ) AS updated_at,
+                COALESCE(runs.run_count, 0) AS run_count,
+                COALESCE(comments.comment_count, 0) AS comment_count,
+                COALESCE(files.attachment_count, 0) AS attachment_count
+            FROM tasks t
+            LEFT JOIN (SELECT task_id, COUNT(*) AS run_count FROM task_runs GROUP BY task_id) runs
+                ON runs.task_id = t.id
+            LEFT JOIN (SELECT task_id, COUNT(*) AS comment_count FROM task_comments GROUP BY task_id) comments
+                ON comments.task_id = t.id
+            LEFT JOIN (SELECT task_id, COUNT(*) AS attachment_count FROM task_attachments GROUP BY task_id) files
+                ON files.task_id = t.id
+            {where_sql}
+            ORDER BY {order_by}
+            LIMIT ? OFFSET ?
+            """,
+            [*params, int(limit), int(offset)],
+        ).fetchall()
+
+        facet_assignees = [
+            row["assignee"]
+            for row in conn.execute("SELECT DISTINCT assignee FROM tasks WHERE assignee IS NOT NULL AND assignee != '' ORDER BY assignee")
+        ]
+        facet_statuses = [
+            row["status"]
+            for row in conn.execute("SELECT DISTINCT status FROM tasks WHERE status IS NOT NULL AND status != '' ORDER BY status")
+        ]
+    finally:
+        conn.close()
+
+    tasks = [
+        {
+            "id": row["id"],
+            "title": row["title"],
+            "status": row["status"],
+            "assignee": row["assignee"],
+            "priority": row["priority"],
+            "tenant": row["tenant"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+            "run_count": int(row["run_count"] or 0),
+            "comment_count": int(row["comment_count"] or 0),
+            "attachment_count": int(row["attachment_count"] or 0),
+        }
+        for row in rows
+    ]
+    return {
+        "tasks": tasks,
+        "total": total,
+        "assignees": facet_assignees,
+        "statuses": facet_statuses,
+    }
+
+
 @router.post("/tasks")
 def create_task(payload: CreateTaskBody, board: Optional[str] = Query(None)) -> dict[str, Any]:
     selected = _resolve_board(board)

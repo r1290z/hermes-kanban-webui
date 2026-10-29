@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-08" />
-  <link rel="stylesheet" href="/static/style.css?v=20261029-08" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-11" />
+  <link rel="stylesheet" href="/static/style.css?v=20261029-11" />
 </head>
 <body>
   <div class="app-shell">
@@ -20,6 +20,11 @@
           <p data-i18n="subtitle">Доска исполнения задач</p>
         </div>
       </div>
+      <nav class="view-switch" id="viewSwitch" role="tablist" aria-label="views">
+        <button class="button ghost is-active" type="button" role="tab" data-view="board" data-i18n="viewBoard">Доска</button>
+        <button class="button ghost" type="button" role="tab" data-view="list" data-i18n="viewList">Список</button>
+        <button class="button ghost" type="button" role="tab" data-view="log" data-i18n="viewLog">Лог</button>
+      </nav>
       <div class="top-actions">
         <select id="boardSelect" aria-label="board"></select>
         <button class="button ghost" id="newBoardBtn" data-i18n="newBoard">Новая доска</button>
@@ -30,6 +35,7 @@
     </header>
 
     <main>
+      <section id="viewBoard" class="view" data-view="board">
       <section class="hero-card">
         <div>
           <p id="serverLabel" class="eyebrow">KanbanWebUI</p>
@@ -50,6 +56,7 @@
         <div class="filters">
           <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
           <select id="assigneeFilter"><option value="" data-i18n="allAssignees">Все исполнители</option></select>
+          <div id="statusFilter" class="multiselect-host"></div>
           <select id="dependencyView" aria-label="dependency view">
             <option value="focus" data-i18n="dependencyViewFocus">Связи: от выбранной</option>
             <option value="all" data-i18n="dependencyViewAll">Связи: все</option>
@@ -69,6 +76,45 @@
       <section id="kpiRow" class="kpi-row" aria-label="board stats"></section>
       <section id="opsPanel" class="ops-panel" aria-label="operations" hidden></section>
       <section id="board" class="board" aria-label="kanban board"></section>
+      </section>
+
+      <section id="viewList" class="view" data-view="list" hidden>
+        <section class="toolbar" aria-label="list filters">
+          <div class="filters">
+            <input id="listSearch" data-i18n-placeholder="listSearchPlaceholder" placeholder="Поиск по названию, тексту, ID" />
+            <div id="listAssigneeFilter" class="multiselect-host"></div>
+            <div id="listStatusFilter" class="multiselect-host"></div>
+            <label class="check"><input id="listArchived" type="checkbox" /> <span data-i18n="showArchived">Показывать архив</span></label>
+          </div>
+          <div class="toolbar-actions">
+            <select id="listSort" aria-label="sort">
+              <option value="created" data-i18n="created">Создано</option>
+              <option value="updated" data-i18n="listUpdated">Обновлена</option>
+              <option value="priority" data-i18n="priority">Приоритет</option>
+              <option value="title" data-i18n="title">Заголовок</option>
+              <option value="status" data-i18n="status">Статус</option>
+            </select>
+            <button class="button ghost" id="listSortDir" type="button" data-i18n="listSortDesc">По убыванию</button>
+          </div>
+        </section>
+        <section class="list-wrap">
+          <table class="list-table" id="listTable">
+            <thead id="listHead"></thead>
+            <tbody id="listBody"></tbody>
+          </table>
+        </section>
+        <div class="list-foot">
+          <span id="listTotal" class="muted"></span>
+          <button class="button ghost" id="listMore" type="button" data-i18n="listShowMore" hidden>Показать ещё</button>
+        </div>
+      </section>
+
+      <section id="viewLog" class="view" data-view="log" hidden>
+        <div class="empty-view">
+          <h2 data-i18n="viewLog">Лог</h2>
+          <p class="muted" data-i18n="logInDevelopment">В разработке</p>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -165,6 +211,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261029-08"></script>
+  <script type="module" src="/static/app.js?v=20261029-11"></script>
 </body>
 </html>

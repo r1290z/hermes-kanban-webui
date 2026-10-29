@@ -14,6 +14,9 @@ def client(tmp_path, monkeypatch):
     monkeypatch.delenv('HERMES_KANBAN_DB', raising=False)
     monkeypatch.delenv('HERMES_KANBAN_BOARD', raising=False)
     monkeypatch.delenv('HERMES_KANBAN_WEBUI_TOKEN', raising=False)
+    # Tests exercise a normal interactive process, not a delegated child: the
+    # worker-spawn marker would fence the DB read-only and break init.
+    monkeypatch.delenv('HERMES_DELEGATED_CHILD_CONTEXT', raising=False)
     from kanban_webui.hermes_imports import kanban_db
 
     kanban_db._INITIALIZED_PATHS.clear()

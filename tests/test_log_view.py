@@ -262,6 +262,7 @@ def test_log_requires_auth_with_token(tmp_path, monkeypatch):
     monkeypatch.setenv('HERMES_KANBAN_WEBUI_TOKEN', 'secret-token')
     monkeypatch.delenv('HERMES_KANBAN_DB', raising=False)
     monkeypatch.delenv('HERMES_KANBAN_BOARD', raising=False)
+    monkeypatch.delenv('HERMES_DELEGATED_CHILD_CONTEXT', raising=False)
     kanban_db._INITIALIZED_PATHS.clear()
     from fastapi.testclient import TestClient
 

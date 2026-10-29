@@ -1,8 +1,8 @@
-import { t } from './i18n.js?v=20261029-12';
-import { escapeHtml } from './markdown.js?v=20261029-12';
-import { openTaskDrawer } from './drawer.js?v=20261029-12';
-import { attachDragHandlers } from './dragdrop.js?v=20261029-12';
-import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261029-12';
+import { t } from './i18n.js?v=20261029-13';
+import { escapeHtml } from './markdown.js?v=20261029-13';
+import { openTaskDrawer } from './drawer.js?v=20261029-13';
+import { attachDragHandlers } from './dragdrop.js?v=20261029-13';
+import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261029-13';
 
 function card(task) {
   const isUnassigned = !task.assignee;
@@ -27,7 +27,7 @@ function card(task) {
     <h3>${escapeHtml(task.title)}</h3>
     ${task.body_preview ? `<p>${escapeHtml(task.body_preview)}</p>` : ''}
     <div class="chips">${assigneeChip}${chips.map(x => `<span>${escapeHtml(x)}</span>`).join('')}${progress}${workflow}</div>
-    <div class="card-foot"><span>💬 ${task.comment_count || 0}</span><span class="relation-badge" title="parents ${parents} · children ${children}">↑ ${parents} ↓ ${children}</span>${task.status === 'running' ? '<strong>LIVE</strong>' : ''}</div>
+    <div class="card-foot"><span>💬 ${task.comment_count || 0}</span>${Number(task.attachment_count || 0) ? `<span title="${escapeHtml(t('attachments'))}">📎 ${task.attachment_count}</span>` : ''}<span class="relation-badge" title="parents ${parents} · children ${children}">↑ ${parents} ↓ ${children}</span>${task.status === 'running' ? '<strong>LIVE</strong>' : ''}</div>
   </article>`;
 }
 

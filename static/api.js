@@ -81,6 +81,23 @@ export async function request(path, options = {}) {
   return data;
 }
 
+// Like request(), but returns the raw Response for blob/streams (attachment
+// downloads and previews). The token must stay in a header — never the URL.
+export async function requestRaw(path, options = {}) {
+  let res = await send(path, options);
+  if (res.status === 401) {
+    askForToken();
+    throw new Error('нужен токен доступа');
+  }
+  if (!res.ok) {
+    const text = await res.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+    throw new Error(errorMessage(data, res.statusText));
+  }
+  return res;
+}
+
 async function send(path, options) {
   const headers = { ...(options.headers || {}), ...tokenHeaders() };
   let body = options.body;
@@ -147,6 +164,9 @@ export const api = {
   createTask: (board, payload) => request(`/api/tasks?${new URLSearchParams({ board })}`, { method: 'POST', body: payload }),
   bulkCreate: (board, payload) => request(`/api/tasks/bulk-create?${new URLSearchParams({ board })}`, { method: 'POST', body: payload }),
   task: (board, id) => request(`/api/tasks/${encodeURIComponent(id)}?${new URLSearchParams({ board })}`),
+  attachments: (board, id) => request(`/api/tasks/${encodeURIComponent(id)}/attachments?${boardQuery(board)}`),
+  attachmentRaw: (board, id, attachmentId) => requestRaw(`/api/tasks/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}?${boardQuery(board)}`),
+  uploadAttachment: (board, id, formData) => request(`/api/tasks/${encodeURIComponent(id)}/attachments?${boardQuery(board)}`, { method: 'POST', body: formData }),
   updateTask: (board, id, payload) => request(`/api/tasks/${encodeURIComponent(id)}?${new URLSearchParams({ board })}`, { method: 'PATCH', body: payload }),
   comment: (board, id, payload) => request(`/api/tasks/${encodeURIComponent(id)}/comments?${new URLSearchParams({ board })}`, { method: 'POST' , body: payload }),
   linkTask: (board, payload) => request(`/api/links?${new URLSearchParams({ board })}`, { method: 'POST', body: payload }),

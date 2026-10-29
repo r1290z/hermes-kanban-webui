@@ -13,7 +13,7 @@ import time
 from typing import Any, Iterable, Optional
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ from .serializers import comment_dict, event_dict, links_for, run_dict, task_dic
 from .service_status import service_status
 from .ui_registry import registry
 from .config import get_settings
-from . import app_update, log_view, workflow_drafts, workflow_planner, workflows
+from . import app_update, attachments_view, log_view, workflow_drafts, workflow_planner, workflows
 from .operations import build_operations_summary
 
 router = APIRouter(prefix="/api")
@@ -1028,6 +1028,10 @@ def board_view(
             row["task_id"]: int(row["n"])
             for row in conn.execute("SELECT task_id, COUNT(*) AS n FROM task_comments GROUP BY task_id").fetchall()
         }
+        attachment_counts = {
+            row["task_id"]: int(row["n"])
+            for row in conn.execute("SELECT task_id, COUNT(*) AS n FROM task_attachments GROUP BY task_id").fetchall()
+        }
         progress: dict[str, dict[str, int]] = {}
         for row in conn.execute(
             "SELECT l.parent_id AS parent_id, t.status AS child_status FROM task_links l JOIN tasks t ON t.id = l.child_id"
@@ -1045,6 +1049,7 @@ def board_view(
             item = task_dict(task, include_body=False)
             item["link_counts"] = link_counts.get(task.id, {"parents": 0, "children": 0})
             item["comment_count"] = comment_counts.get(task.id, 0)
+            item["attachment_count"] = attachment_counts.get(task.id, 0)
             item["progress"] = progress.get(task.id)
             rows.append(item)
             column = task.status if task.status in columns else "todo"
@@ -1456,6 +1461,60 @@ def add_comment(task_id: str, payload: CommentBody, board: Optional[str] = Query
             raise HTTPException(status_code=404, detail=f"task {task_id} not found")
         comment_id = kanban_db.add_comment(conn, task_id, author=payload.author or "kanban-webui", body=payload.body)
         return {"ok": True, "comment_id": comment_id, "comments": [comment_dict(c) for c in kanban_db.list_comments(conn, task_id)]}
+    finally:
+        conn.close()
+
+
+@router.get("/tasks/{task_id}/attachments")
+def list_task_attachments(task_id: str, board: Optional[str] = Query(None)) -> list[dict[str, Any]]:
+    """Attachment metadata for one task, newest first."""
+    selected = _resolve_board(board)
+    conn = kanban_db.connect(board=selected)
+    try:
+        if kanban_db.get_task(conn, task_id) is None:
+            raise HTTPException(status_code=404, detail=f"task {task_id} not found")
+        return attachments_view.build_attachments_payload(conn, task_id, board=selected)
+    finally:
+        conn.close()
+
+
+@router.get("/tasks/{task_id}/attachments/{attachment_id}")
+def download_task_attachment(
+    task_id: str, attachment_id: int, board: Optional[str] = Query(None)
+) -> StreamingResponse:
+    """Stream one attachment; the path comes from the DB but is containment-checked."""
+    selected = _resolve_board(board)
+    conn = kanban_db.connect(board=selected)
+    try:
+        return attachments_view.build_download_response(conn, task_id, attachment_id, board=selected)
+    finally:
+        conn.close()
+
+
+@router.post("/tasks/{task_id}/attachments")
+async def upload_task_attachment(
+    task_id: str, board: Optional[str] = Query(None), file: UploadFile = File(...)
+) -> dict[str, Any]:
+    """Store an uploaded file as a task attachment."""
+    selected = _resolve_board(board)
+    conn = kanban_db.connect(board=selected)
+    try:
+        if kanban_db.get_task(conn, task_id) is None:
+            raise HTTPException(status_code=404, detail=f"task {task_id} not found")
+        data = await file.read()
+        attachment_id = attachments_view.store_upload(
+            conn,
+            task_id,
+            board=selected,
+            filename=file.filename or "attachment.bin",
+            content_type=file.content_type,
+            data=data,
+        )
+        return {
+            "ok": True,
+            "attachment_id": attachment_id,
+            "attachments": attachments_view.build_attachments_payload(conn, task_id, board=selected),
+        }
     finally:
         conn.close()
 

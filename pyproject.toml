@@ -15,6 +15,7 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "pydantic",
+  "python-multipart",
 ]
 
 [project.urls]

@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261029-12';
-import { t, applyI18n } from './i18n.js?v=20261029-12';
-import { renderMarkdown, escapeHtml } from './markdown.js?v=20261029-12';
-import { renderMonitor } from './monitor.js?v=20261029-12';
-import { state, toast } from './state.js?v=20261029-12';
+import { api } from './api.js?v=20261029-13';
+import { t, applyI18n } from './i18n.js?v=20261029-13';
+import { renderMarkdown, escapeHtml } from './markdown.js?v=20261029-13';
+import { renderMonitor } from './monitor.js?v=20261029-13';
+import { state, toast } from './state.js?v=20261029-13';
 
 export function closeDrawer() {
   const drawer = document.getElementById('drawer');
@@ -150,6 +150,102 @@ async function renderWorkerLog(taskId, root) {
   }
 }
 
+function formatSize(bytes) {
+  const n = Number(bytes || 0);
+  if (n < 1024) return `${n} Б`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} КБ`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} МБ`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(1)} ГБ`;
+}
+
+function attachmentIcon(item) {
+  const type = String(item.content_type || '');
+  const name = String(item.filename || '').toLowerCase();
+  if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/.test(name)) return '🖼';
+  if (type.startsWith('audio/') || /\.(mp3|wav|ogg|flac)$/.test(name)) return '🎧';
+  if (type.startsWith('video/') || /\.(mp4|mkv|webm|mov)$/.test(name)) return '🎬';
+  if (/\.(zip|gz|tar|7z|rar)$/.test(name)) return '🗜';
+  if (/\.(md|txt|log)$/.test(name)) return '📄';
+  return '📎';
+}
+
+// Workers often store attachments without a content_type (kanban_complete
+// leaves it NULL), so image detection also sniffs the file extension; the
+// download endpoint likewise guesses image/* from the name for inline mode.
+function isImageAttachment(item) {
+  const type = String(item.content_type || '');
+  if (type.startsWith('image/')) return true;
+  return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(String(item.filename || ''));
+}
+
+function attachmentItemHtml(item) {
+  const thumb = item.missing
+    ? `<span class="attachment-thumb missing" title="${t('attachmentLost')}">✕</span>`
+    : (isImageAttachment(item)
+      ? `<img class="attachment-thumb" data-attachment-preview="${item.id}" alt="${escapeHtml(item.filename)}" />`
+      : `<span class="attachment-thumb">${attachmentIcon(item)}</span>`);
+  const meta = [formatSize(item.size), formatTime(item.created_at), item.uploaded_by || '—']
+    .map(escapeHtml).join(' · ');
+  const name = item.missing
+    ? `${escapeHtml(item.filename || '—')} <span class="attachment-missing">${t('attachmentLost')}</span>`
+    : escapeHtml(item.filename || '—');
+  const download = item.missing
+    ? ''
+    : `<button class="button ghost" data-attachment-download="${item.id}" data-attachment-filename="${escapeHtml(item.filename || '')}" title="${t('download')}">⬇</button>`;
+  return `<li class="attachment-item">${thumb}<div class="attachment-info"><span class="attachment-name">${name}</span><small>${meta}</small></div>${download}</li>`;
+}
+
+async function loadAttachmentPreview(board, taskId, item, root) {
+  const img = root.querySelector(`[data-attachment-preview="${item.id}"]`);
+  if (!img) return;
+  try {
+    const res = await api.attachmentRaw(board, taskId, item.id);
+    img.src = URL.createObjectURL(await res.blob());
+  } catch {
+    img.replaceWith(Object.assign(document.createElement('span'), { className: 'attachment-thumb', textContent: attachmentIcon(item) }));
+  }
+}
+
+async function downloadAttachment(board, taskId, item) {
+  const res = await api.attachmentRaw(board, taskId, item.id);
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = item.filename || 'attachment';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+async function renderAttachments(board, taskId, root) {
+  const list = root.querySelector('#attachmentList');
+  if (!list) return;
+  let attachments = [];
+  try {
+    attachments = await api.attachments(board, taskId);
+  } catch (err) {
+    list.innerHTML = `<li class="muted">${escapeHtml(err.message || String(err))}</li>`;
+    return;
+  }
+  list.innerHTML = attachments.length
+    ? attachments.map(attachmentItemHtml).join('')
+    : `<li class="muted">${t('empty')}</li>`;
+  list.querySelectorAll('[data-attachment-download]').forEach(btn => btn.addEventListener('click', async () => {
+    const id = Number(btn.dataset.attachmentDownload);
+    const item = attachments.find(a => a.id === id);
+    if (!item || item.missing) return;
+    try {
+      await downloadAttachment(board, taskId, item);
+    } catch (err) {
+      toast(err.message || String(err));
+    }
+  }));
+  for (const item of attachments) {
+    if (!item.missing && isImageAttachment(item)) await loadAttachmentPreview(board, taskId, item, list);
+  }
+}
+
 export async function openTaskDrawer(taskId) {
   state.selectedTaskId = taskId;
   document.dispatchEvent(new CustomEvent('kanban:dependency-selected', { detail: { taskId } }));
@@ -231,6 +327,15 @@ export async function openTaskDrawer(taskId) {
     <section class="drawer-section"><h3>${t('comments')} (${detail.comments.length})</h3>
       <ol class="comment-list">${detail.comments.length ? detail.comments.map(c => `<li><strong>${escapeHtml(c.author)}</strong><small>${formatTime(c.created_at)}</small><p>${escapeHtml(c.body)}</p></li>`).join('') : `<li>${t('empty')}</li>`}</ol>
       <form id="commentForm" class="comment-form"><textarea name="body" placeholder="${t('addComment')}"></textarea><button class="button">${t('addComment')}</button></form>
+    </section>
+
+    <section class="drawer-section" id="attachmentsSection">
+      <div class="section-title"><h3>${t('attachments')}</h3></div>
+      <ul id="attachmentList" class="attachment-list"><li class="muted">…</li></ul>
+      <form id="attachmentForm" class="attachment-form">
+        <input type="file" name="file" id="attachmentFileInput" required />
+        <button class="button" type="submit">${t('attachmentAdd')}</button>
+      </form>
     </section>
 
     <section class="drawer-section"><h3>${t('runs')}</h3><ol class="timeline">${detail.runs.length ? detail.runs.map(r => `<li><code>${r.id}</code> ${runSummary(r)}</li>`).join('') : `<li>${t('empty')}</li>`}</ol></section>
@@ -329,8 +434,26 @@ export async function openTaskDrawer(taskId) {
     }
     await openTaskDrawer(task.id);
   }));
+  drawer.querySelector('#attachmentForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const fileInput = drawer.querySelector('#attachmentFileInput');
+    const file = fileInput?.files?.[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      await api.uploadAttachment(state.board, task.id, form);
+      toast('attachment uploaded');
+    } catch (err) {
+      toast(err.message || String(err));
+      return;
+    }
+    document.dispatchEvent(new CustomEvent('kanban:refresh'));
+    await renderAttachments(state.board, task.id, drawer);
+  });
   drawer.querySelector('[data-log-refresh]').addEventListener('click', () => renderWorkerLog(task.id, drawer));
   await renderWorkerLog(task.id, drawer);
+  await renderAttachments(state.board, task.id, drawer);
   if (task.status === 'running' || task.current_run_id) {
     await renderMonitor(state.board, task.id, drawer.querySelector('#monitorMount'));
   }

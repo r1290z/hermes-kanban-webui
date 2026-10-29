@@ -3,6 +3,20 @@ function tokenHeaders() {
   return token ? { 'X-Kanban-Token': token } : {};
 }
 
+// A token in the query string would land in proxy logs and browser history, so the
+// shareable link carries it in the fragment: the browser never sends that to the
+// server. Read it once, keep it, then scrub it from the address bar and history.
+function absorbFragmentToken() {
+  const hash = location.hash || '';
+  const match = hash.match(/(?:^#|&)token=([^&]+)/);
+  if (!match) return;
+  const token = decodeURIComponent(match[1]).trim();
+  if (token) localStorage.setItem('kanbanToken', token);
+  history.replaceState(null, '', location.pathname + location.search);
+}
+
+absorbFragmentToken();
+
 function errorMessage(data, fallback) {
   const message = data.detail || data.error || fallback;
   if (Array.isArray(message)) return message.map(x => x.msg || JSON.stringify(x)).join(', ');

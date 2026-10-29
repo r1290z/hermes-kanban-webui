@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-01" />
-  <link rel="stylesheet" href="/static/style.css?v=20261029-01" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-07" />
+  <link rel="stylesheet" href="/static/style.css?v=20261029-07" />
 </head>
 <body>
   <div class="app-shell">
@@ -46,6 +46,7 @@
       </section>
 
       <section class="toolbar" aria-label="filters">
+        <button class="button ghost toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" data-i18n="toolbarToggle">Фильтры и действия</button>
         <div class="filters">
           <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
           <select id="assigneeFilter"><option value="" data-i18n="allAssignees">Все исполнители</option></select>
@@ -84,6 +85,7 @@
       <div class="task-field-grid">
         <label class="dialog-label"><span data-i18n="assignee">Профиль агента</span><select id="taskAssignee" name="assignee" aria-label="agent profile"></select></label>
         <label class="dialog-label"><span data-i18n="status">Статус</span><select id="taskStatus" name="status">
+          <option value="scheduled" data-i18n="scheduled">Бэклог</option>
           <option value="ready">ready</option>
           <option value="todo">todo</option>
           <option value="triage">triage</option>
@@ -163,6 +165,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261029-01"></script>
+  <script type="module" src="/static/app.js?v=20261029-07"></script>
 </body>
 </html>

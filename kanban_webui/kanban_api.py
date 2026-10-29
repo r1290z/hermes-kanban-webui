@@ -27,8 +27,10 @@ from .operations import build_operations_summary
 
 router = APIRouter(prefix="/api")
 
-BOARD_COLUMNS = ["triage", "todo", "ready", "running", "blocked", "done"]
-INITIAL_TASK_STATUSES = {"ready", "todo", "triage"}
+# `scheduled` is Hermes' parking state: the dispatcher never claims it. Without its own
+# column it fell into "todo" and parked cards looked ready to run.
+BOARD_COLUMNS = ["scheduled", "triage", "todo", "ready", "running", "blocked", "done"]
+INITIAL_TASK_STATUSES = {"scheduled", "ready", "todo", "triage"}
 UPDATE_TASK_STATUSES = {"done", "blocked", "ready", "archived", "todo", "triage", "running"}
 WRITEABLE_TASK_FIELDS = {
     "title",
@@ -503,7 +505,7 @@ def _precheck_status_transition(task, status: Optional[str]) -> None:
         allowed = True
     elif status == "archived":
         allowed = current != "archived"
-    elif status in {"todo", "triage"}:
+    elif status in {"todo", "triage", "scheduled"}:
         allowed = True
     elif status == "running":
         raise HTTPException(status_code=400, detail="use /claim or dispatcher to move a task to running")
@@ -1079,7 +1081,7 @@ def create_task(payload: CreateTaskBody, board: Optional[str] = Query(None)) -> 
     conn = kanban_db.connect(board=selected)
     try:
         if payload.status and payload.status not in INITIAL_TASK_STATUSES:
-            raise HTTPException(status_code=400, detail="initial status can only be ready/todo/triage; use lifecycle endpoints for others")
+            raise HTTPException(status_code=400, detail="initial status can only be scheduled/ready/todo/triage; use lifecycle endpoints for others")
         try:
             task_id = kanban_db.create_task(
                 conn,
@@ -1128,7 +1130,7 @@ def bulk_create(payload: BulkCreateBody, board: Optional[str] = Query(None)) -> 
         conn = kanban_db.connect(board=selected)
         try:
             if item.status and item.status not in INITIAL_TASK_STATUSES:
-                raise ValueError("initial status can only be ready/todo/triage; use lifecycle endpoints for others")
+                raise ValueError("initial status can only be scheduled/ready/todo/triage; use lifecycle endpoints for others")
             task_id = kanban_db.create_task(
                 conn,
                 title=item.title,

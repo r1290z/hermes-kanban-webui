@@ -1,0 +1,17 @@
+[Unit]
+Description=Hermes KanbanWebUI
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/workspace/HermesKanban
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=HERMES_AGENT_ROOT=%h/.hermes/hermes-agent
+Environment=HERMES_KANBAN_WEBUI_HOST=127.0.0.1
+Environment=HERMES_KANBAN_WEBUI_PORT=8790
+ExecStart=/usr/bin/env uv run python server.py --host 127.0.0.1 --port 8790
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

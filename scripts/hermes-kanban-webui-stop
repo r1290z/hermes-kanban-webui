@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n "${HERMES_REAL_HOME:-}" ]]; then
+  REAL_HOME="$HERMES_REAL_HOME"
+elif [[ -n "${USER:-}" && -d "/home/$USER" ]]; then
+  REAL_HOME="/home/$USER"
+else
+  REAL_HOME="${HOME:?HOME is not set}"
+fi
+STATE_DIR="${HERMES_KANBAN_WEBUI_STATE:-$REAL_HOME/.hermes/kanban-webui}"
+PID_FILE="$STATE_DIR/kanban-webui.pid"
+
+if [[ ! -f "$PID_FILE" ]]; then
+  echo "KanbanWebUI is not running (no pid file)"
+  exit 0
+fi
+pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+if [[ -z "$pid" ]] || ! kill -0 "$pid" 2>/dev/null; then
+  rm -f "$PID_FILE"
+  echo "KanbanWebUI is not running"
+  exit 0
+fi
+kill "$pid"
+for _ in {1..20}; do
+  if ! kill -0 "$pid" 2>/dev/null; then
+    rm -f "$PID_FILE"
+    echo "KanbanWebUI stopped"
+    exit 0
+  fi
+  sleep 0.2
+done
+kill -9 "$pid" 2>/dev/null || true
+rm -f "$PID_FILE"
+echo "KanbanWebUI force-stopped"

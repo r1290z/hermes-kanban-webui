@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hermes KanbanWebUI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-01" />
+  <link rel="stylesheet" href="/static/style.css?v=20261029-01" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">H</div>
+        <div>
+          <h1>Hermes Kanban</h1>
+          <p data-i18n="subtitle">Доска исполнения задач</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <select id="boardSelect" aria-label="board"></select>
+        <button class="button ghost" id="newBoardBtn" data-i18n="newBoard">Новая доска</button>
+        <button class="button ghost" id="refreshBtn" data-i18n="refresh">Обновить</button>
+        <button class="button ghost theme-toggle" id="themeToggle" type="button" aria-pressed="false">🌙 Тёмная</button>
+        <button class="button" id="langToggle">EN</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-card">
+        <div>
+          <p id="serverLabel" class="eyebrow">KanbanWebUI</p>
+          <h2 id="boardTitle">Default</h2>
+          <p id="boardDescription" class="muted">Отдельный интерфейс к той же базе, что и Hermes CLI</p>
+        </div>
+        <div class="health-panel">
+          <span id="healthDot" class="dot"></span>
+          <div>
+            <strong id="healthText">loading</strong>
+            <small id="dbPath"></small>
+          </div>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="filters">
+        <div class="filters">
+          <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
+          <select id="assigneeFilter"><option value="" data-i18n="allAssignees">Все исполнители</option></select>
+          <select id="dependencyView" aria-label="dependency view">
+            <option value="focus" data-i18n="dependencyViewFocus">Связи: от выбранной</option>
+            <option value="all" data-i18n="dependencyViewAll">Связи: все</option>
+            <option value="blocked" data-i18n="dependencyViewBlocked">Связи: блокировки</option>
+            <option value="off" data-i18n="dependencyViewOff">Связи: скрыты</option>
+          </select>
+          <label class="check"><input id="archivedToggle" type="checkbox" /> <span data-i18n="showArchived">Показывать архив</span></label>
+        </div>
+        <div class="toolbar-actions">
+          <button class="button ghost" id="opsToggleBtn" type="button" data-i18n="operations" aria-expanded="false">Operations</button>
+          <button class="button primary" id="taskCreateBtn" type="button" data-i18n="taskCreate">Создать задачу</button>
+          <button class="button ghost" id="workflowBtn" type="button" data-i18n="workflowCreate">Создать AI workflow</button>
+          <button class="button ghost" id="bulkBtn" type="button" data-i18n="bulkCreate">Массовое создание</button>
+        </div>
+      </section>
+
+      <section id="kpiRow" class="kpi-row" aria-label="board stats"></section>
+      <section id="opsPanel" class="ops-panel" aria-label="operations" hidden></section>
+      <section id="board" class="board" aria-label="kanban board"></section>
+    </main>
+  </div>
+
+  <aside id="drawer" class="drawer" aria-hidden="true"></aside>
+  <div id="overlay" class="overlay" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="taskDialog" class="modal task-modal">
+    <form id="taskCreateForm" method="dialog">
+      <h3 data-i18n="taskCreate">Создать задачу</h3>
+      <p class="muted" data-i18n="taskCreateHint">Открывайте это окно, только когда нужно задать заголовок, описание, профиль агента и статус новой задачи.</p>
+      <label class="dialog-label"><span data-i18n="title">Заголовок</span><input id="taskTitle" name="title" autocomplete="off" data-i18n-placeholder="taskTitlePlaceholder" placeholder="Название задачи" required /></label>
+      <label class="dialog-label"><span data-i18n="body">Текст</span><textarea id="taskBody" name="body" rows="4" data-i18n-placeholder="taskBodyPlaceholder" placeholder="Описание задачи / инструкции (необязательно)"></textarea></label>
+      <div class="task-field-grid">
+        <label class="dialog-label"><span data-i18n="assignee">Профиль агента</span><select id="taskAssignee" name="assignee" aria-label="agent profile"></select></label>
+        <label class="dialog-label"><span data-i18n="status">Статус</span><select id="taskStatus" name="status">
+          <option value="ready">ready</option>
+          <option value="todo">todo</option>
+          <option value="triage">triage</option>
+        </select></label>
+      </div>
+      <div class="modal-actions">
+        <button class="button ghost" type="button" data-task-cancel data-i18n="cancel">Отмена</button>
+        <button class="button primary" value="default" data-i18n="create">Создать</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="boardDialog" class="modal">
+    <form id="boardForm" method="dialog">
+      <h3 data-i18n="newBoard">Новая доска</h3>
+      <input name="slug" placeholder="project-slug" required />
+      <input name="name" data-i18n-placeholder="boardName" placeholder="Название доски" />
+      <textarea name="description" data-i18n-placeholder="description" placeholder="Описание"></textarea>
+      <div class="modal-actions">
+        <button class="button ghost" value="cancel" data-i18n="cancel">Отмена</button>
+        <button class="button primary" value="default" data-i18n="create">Создать</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="bulkDialog" class="modal">
+    <form id="bulkForm" method="dialog">
+      <h3 data-i18n="bulkCreate">Массовое создание</h3>
+      <p class="muted" data-i18n="bulkHint">По одной задаче в строке.</p>
+      <textarea name="lines" rows="10" placeholder="Task one
+Task two"></textarea>
+      <div class="modal-actions">
+        <button class="button ghost" value="cancel" data-i18n="cancel">Отмена</button>
+        <button class="button primary" value="default" data-i18n="create">Создать</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="workflowDialog" class="modal workflow-modal">
+    <form id="workflowForm" method="dialog">
+      <h3 data-i18n="workflowCreate">Создать AI workflow</h3>
+      <p class="muted" data-i18n="workflowDesignerHint">Спроектируйте граф задач из промпта и вложений, затем примените его как настоящие карточки.</p>
+      <label class="dialog-label"><span data-i18n="workflowPrompt">Промпт workflow</span><textarea id="workflowPrompt" name="prompt" rows="6" data-i18n-placeholder="workflowPromptPlaceholder" placeholder="Опишите цели, результаты, ограничения и желаемое число шагов" required></textarea></label>
+      <div class="workflow-field-grid">
+        <label class="dialog-label"><span data-i18n="workflowPlannerProfile">Профиль планировщика</span><input id="workflowPlannerProfile" name="planner_profile" placeholder="авто" /></label>
+        <label class="dialog-label"><span data-i18n="workflowInstance">ID экземпляра</span><input name="instance_id" placeholder="необязательно: wf_project_001" /></label>
+      </div>
+      <label class="dialog-label"><span data-i18n="workflowAttachments">Вложения</span><input id="workflowAttachments" name="attachments" type="file" multiple /></label>
+      <div class="workflow-draft-actions">
+        <button class="button ghost" type="button" data-workflow-plan data-i18n="workflowPlan">Спроектировать</button>
+      </div>
+      <div id="workflowDraftPreview" class="workflow-preview" aria-live="polite"></div>
+      <label class="dialog-label"><span data-i18n="workflowRevise">Исправить</span><textarea id="workflowRevisionPrompt" name="revision_prompt" rows="3" data-i18n-placeholder="workflowRevisionPlaceholder" placeholder="Опишите изменения шагов, профилей или зависимостей"></textarea></label>
+      <div class="modal-actions">
+        <button class="button ghost" type="button" data-workflow-cancel data-i18n="cancel">Отмена</button>
+        <button class="button ghost" type="button" data-workflow-revise data-i18n="workflowRevise" disabled>Исправить</button>
+        <button class="button primary" type="button" data-workflow-apply data-i18n="workflowApply" disabled>Применить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="updateDialog" class="modal update-modal">
+    <form method="dialog">
+      <p class="eyebrow" data-i18n="updateAvailable">Доступно обновление</p>
+      <h3 data-i18n="updateTitle">Обновление KanbanWebUI</h3>
+      <p id="updateStatusMessage" class="muted update-status" data-i18n="updateChecking">Проверка обновлений…</p>
+      <div class="update-meta">
+        <span data-update-current>local</span>
+        <strong>→</strong>
+        <span data-update-remote>origin/main</span>
+      </div>
+      <ul id="updateCommitList" class="update-commit-list"></ul>
+      <div class="modal-actions">
+        <button class="button ghost" type="button" data-update-later data-i18n="updateLater">Позже</button>
+        <button class="button primary" type="button" data-update-apply data-i18n="updateApply">Обновить и перезапустить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/static/app.js?v=20261029-01"></script>
+</body>
+</html>

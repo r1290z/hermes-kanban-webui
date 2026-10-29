@@ -352,7 +352,11 @@ def test_dependency_lines_render_above_column_backgrounds_below_cards():
     assert '.board-column { position: relative; min-width: 0;' in style
     assert '.board-column { position: relative; z-index: 1;' not in style
     assert '.cards { position: relative; z-index: 2;' in style
-    assert '.task-card { position: relative;' in style
+    task_card_rule = style.split('.task-card {', 1)[1].split('}', 1)[0]
+    assert 'position: relative' in task_card_rule
+    # a grid item defaults to min-width:auto (min-content), so one long unbreakable
+    # path in a title used to push the card past its column and over the neighbour
+    assert 'min-width: 0' in task_card_rule
     assert '.dependency-overlay { position: absolute; left: 0; top: 0; z-index: 1;' in style
 
 

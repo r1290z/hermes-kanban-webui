@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261029-11';
-import { t } from './i18n.js?v=20261029-11';
-import { escapeHtml } from './markdown.js?v=20261029-11';
-import { openTaskDrawer } from './drawer.js?v=20261029-11';
-import { state } from './state.js?v=20261029-11';
+import { api } from './api.js?v=20261029-12';
+import { t } from './i18n.js?v=20261029-12';
+import { escapeHtml } from './markdown.js?v=20261029-12';
+import { openTaskDrawer } from './drawer.js?v=20261029-12';
+import { state } from './state.js?v=20261029-12';
 
 const PAGE_SIZE = 100;
 

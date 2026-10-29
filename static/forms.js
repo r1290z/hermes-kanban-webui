@@ -1,7 +1,7 @@
-import { api } from './api.js?v=20261029-11';
-import { escapeHtml } from './markdown.js?v=20261029-11';
-import { t } from './i18n.js?v=20261029-11';
-import { state, toast, setBoard } from './state.js?v=20261029-11';
+import { api } from './api.js?v=20261029-12';
+import { escapeHtml } from './markdown.js?v=20261029-12';
+import { t } from './i18n.js?v=20261029-12';
+import { state, toast, setBoard } from './state.js?v=20261029-12';
 
 function stepKey(step) {
   return step.step_key || step.key || '';

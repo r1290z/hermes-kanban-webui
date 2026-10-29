@@ -120,6 +120,22 @@ export const api = {
     const query = new URLSearchParams(clean).toString();
     return request(query ? `/api/list?${query}` : '/api/list');
   },
+  log: params => {
+    const clean = {};
+    for (const [key, value] of Object.entries(params || {})) {
+      if (value !== undefined && value !== null && value !== '') clean[key] = value;
+    }
+    const query = new URLSearchParams(clean).toString();
+    return request(query ? `/api/log?${query}` : '/api/log');
+  },
+  logEvents: params => {
+    const clean = {};
+    for (const [key, value] of Object.entries(params || {})) {
+      if (value !== undefined && value !== null && value !== '') clean[key] = value;
+    }
+    const query = new URLSearchParams(clean).toString();
+    return request(query ? `/api/log/events?${query}` : '/api/log/events');
+  },
   board: params => {
     const clean = {};
     for (const [key, value] of Object.entries(params || {})) {

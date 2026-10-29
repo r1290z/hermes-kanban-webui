@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-11" />
-  <link rel="stylesheet" href="/static/style.css?v=20261029-11" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-12" />
+  <link rel="stylesheet" href="/static/style.css?v=20261029-12" />
 </head>
 <body>
   <div class="app-shell">
@@ -110,9 +110,36 @@
       </section>
 
       <section id="viewLog" class="view" data-view="log" hidden>
-        <div class="empty-view">
-          <h2 data-i18n="viewLog">Лог</h2>
-          <p class="muted" data-i18n="logInDevelopment">В разработке</p>
+        <section class="toolbar log-toolbar" aria-label="log filters">
+          <div class="log-filters" id="logFilters">
+            <button class="button ghost log-filters-toggle" id="logFiltersToggle" type="button" data-i18n="toolbarToggle" aria-expanded="false">Фильтры и действия</button>
+            <div class="filters">
+              <select id="logAssignee" aria-label="profile"></select>
+              <select id="logOutcome" aria-label="outcome"></select>
+              <select id="logSince" aria-label="period">
+                <option value="all" data-i18n="logSinceAll">За всё время</option>
+                <option value="today" data-i18n="logSinceToday">Сегодня</option>
+                <option value="7d" data-i18n="logSince7d">7 дней</option>
+                <option value="30d" data-i18n="logSince30d">30 дней</option>
+              </select>
+              <span id="logKindFilter" hidden>
+                <select id="logKind" aria-label="event kind"></select>
+              </span>
+              <input id="logSearch" data-i18n-placeholder="logSearchPlaceholder" placeholder="Поиск по summary" />
+              <label class="check"><input id="logHeartbeat" type="checkbox" /> <span data-i18n="logShowHeartbeat">Показывать heartbeat</span></label>
+            </div>
+          </div>
+          <div class="toolbar-actions">
+            <button class="button ghost is-active" id="logModeRuns" type="button" data-i18n="logRuns">Прогоны</button>
+            <button class="button ghost" id="logModeEvents" type="button" data-i18n="logEventsMode">События</button>
+          </div>
+        </section>
+        <section class="log-wrap">
+          <div class="log-list" id="logList"></div>
+        </section>
+        <div class="list-foot">
+          <span id="logCount" class="muted"></span>
+          <button class="button ghost" id="logMore" type="button" data-i18n="listShowMore" hidden>Показать ещё</button>
         </div>
       </section>
     </main>
@@ -211,6 +238,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261029-11"></script>
+  <script type="module" src="/static/app.js?v=20261029-12"></script>
 </body>
 </html>

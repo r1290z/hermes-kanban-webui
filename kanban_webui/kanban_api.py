@@ -22,7 +22,7 @@ from .serializers import comment_dict, event_dict, links_for, run_dict, task_dic
 from .service_status import service_status
 from .ui_registry import registry
 from .config import get_settings
-from . import app_update, workflow_drafts, workflow_planner, workflows
+from . import app_update, log_view, workflow_drafts, workflow_planner, workflows
 from .operations import build_operations_summary
 
 router = APIRouter(prefix="/api")
@@ -1204,6 +1204,74 @@ def list_tasks(
         "assignees": facet_assignees,
         "statuses": facet_statuses,
     }
+
+
+@router.get("/log")
+def log_runs(
+    board: Optional[str] = Query(None),
+    assignee: Optional[str] = Query(None),
+    outcome: Optional[str] = Query(None),
+    task: Optional[str] = Query(None),
+    since: str = Query("all"),
+    limit: int = Query(log_view.DEFAULT_LIMIT, ge=1, le=log_view.MAX_LIMIT),
+    before: Optional[int] = Query(None),
+    before_id: Optional[int] = Query(None),
+    q: Optional[str] = Query(None),
+) -> dict[str, Any]:
+    """Execution log: finished runs, newest first, cursor paginated."""
+    selected = _resolve_board(board)
+    conn = kanban_db.connect(board=selected)
+    try:
+        payload = log_view.build_log_payload(
+            conn,
+            assignee=(assignee or "").strip() or None,
+            outcome=(outcome or "").strip() or None,
+            task=(task or "").strip() or None,
+            since=since,
+            limit=limit,
+            before=before,
+            before_id=before_id,
+            q=q,
+        )
+    finally:
+        conn.close()
+    payload["board"] = selected
+    return payload
+
+
+@router.get("/log/events")
+def log_events(
+    board: Optional[str] = Query(None),
+    assignee: Optional[str] = Query(None),
+    outcome: Optional[str] = Query(None),
+    task: Optional[str] = Query(None),
+    since: str = Query("all"),
+    kind: Optional[str] = Query(None),
+    include_heartbeat: bool = Query(False),
+    limit: int = Query(log_view.DEFAULT_LIMIT, ge=1, le=log_view.MAX_LIMIT),
+    before: Optional[int] = Query(None),
+    before_id: Optional[int] = Query(None),
+) -> dict[str, Any]:
+    """Event feed of the execution log (heartbeats are hidden by default)."""
+    selected = _resolve_board(board)
+    conn = kanban_db.connect(board=selected)
+    try:
+        payload = log_view.build_log_events_payload(
+            conn,
+            assignee=(assignee or "").strip() or None,
+            outcome=(outcome or "").strip() or None,
+            task=(task or "").strip() or None,
+            since=since,
+            kind=(kind or "").strip() or None,
+            include_heartbeat=include_heartbeat,
+            limit=limit,
+            before=before,
+            before_id=before_id,
+        )
+    finally:
+        conn.close()
+    payload["board"] = selected
+    return payload
 
 
 @router.post("/tasks")

@@ -1,15 +1,16 @@
-import { api } from './api.js?v=20261029-11';
-import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-11';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-11';
-import { renderBoard, renderKpis } from './board.js?v=20261029-11';
-import { setupDependencyControls } from './dependency-lines.js?v=20261029-11';
-import { setupForms } from './forms.js?v=20261029-11';
-import { setupMobileFallback } from './mobile.js?v=20261029-11';
-import { setupAppUpdatePrompt } from './update.js?v=20261029-11';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-11';
-import { closeDrawer } from './drawer.js?v=20261029-11';
-import { state, setBoard, toast } from './state.js?v=20261029-11';
-import { createMultiSelect, loadList, setupListView } from './list.js?v=20261029-11';
+import { api } from './api.js?v=20261029-12';
+import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-12';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-12';
+import { renderBoard, renderKpis } from './board.js?v=20261029-12';
+import { setupDependencyControls } from './dependency-lines.js?v=20261029-12';
+import { setupForms } from './forms.js?v=20261029-12';
+import { setupMobileFallback } from './mobile.js?v=20261029-12';
+import { setupAppUpdatePrompt } from './update.js?v=20261029-12';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-12';
+import { closeDrawer } from './drawer.js?v=20261029-12';
+import { state, setBoard, toast } from './state.js?v=20261029-12';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261029-12';
+import { loadLog, setupLogView } from './log.js?v=20261029-12';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
@@ -37,6 +38,7 @@ function applyView(view, { updateHash = true } = {}) {
     history.replaceState(null, '', `#view=${active}`);
   }
   if (active === 'list') loadList();
+  if (active === 'log') loadLog();
   return active;
 }
 
@@ -161,6 +163,7 @@ export async function load() {
   await refreshOperationsPanel();
   await loadStatus();
   if (currentView() === 'list') loadList();
+  if (currentView() === 'log') loadLog();
 }
 
 function setupControls() {
@@ -210,6 +213,7 @@ async function main() {
   setupViewSwitch();
   setupBoardStatusFilter();
   setupListView();
+  setupLogView();
   setupDependencyControls();
   setupForms(load);
   setupMobileFallback();

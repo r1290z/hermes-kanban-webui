@@ -176,5 +176,6 @@ export const api = {
   subscribeHome: (board, id, platform) => request(`/api/tasks/${encodeURIComponent(id)}/home-subscribe/${encodeURIComponent(platform)}?${new URLSearchParams({ board })}`, { method: 'POST' }),
   unsubscribeHome: (board, id, platform) => request(`/api/tasks/${encodeURIComponent(id)}/home-subscribe/${encodeURIComponent(platform)}?${new URLSearchParams({ board })}`, { method: 'DELETE' }),
   monitor: (board, id) => request(`/api/tasks/${encodeURIComponent(id)}/monitor?${new URLSearchParams({ board, tail: 65536 })}`),
-  events: (board, since = 0) => request(`/api/events?${new URLSearchParams({ board, since })}`)
+  events: (board, since = 0) => request(`/api/events?${new URLSearchParams({ board, since })}`),
+  pulse: (board, tasks) => request(`/api/pulse?${new URLSearchParams({ board, tasks })}`)
 };

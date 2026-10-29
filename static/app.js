@@ -1,16 +1,17 @@
-import { api } from './api.js?v=20261029-13';
-import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-13';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-13';
-import { renderBoard, renderKpis } from './board.js?v=20261029-13';
-import { setupDependencyControls } from './dependency-lines.js?v=20261029-13';
-import { setupForms } from './forms.js?v=20261029-13';
-import { setupMobileFallback } from './mobile.js?v=20261029-13';
-import { setupAppUpdatePrompt } from './update.js?v=20261029-13';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-13';
-import { closeDrawer } from './drawer.js?v=20261029-13';
-import { state, setBoard, toast } from './state.js?v=20261029-13';
-import { createMultiSelect, loadList, setupListView } from './list.js?v=20261029-13';
-import { loadLog, setupLogView } from './log.js?v=20261029-13';
+import { api } from './api.js?v=20261029-15';
+import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-15';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-15';
+import { renderBoard, renderKpis } from './board.js?v=20261029-15';
+import { setupDependencyControls } from './dependency-lines.js?v=20261029-15';
+import { setupForms } from './forms.js?v=20261029-15';
+import { setupMobileFallback } from './mobile.js?v=20261029-15';
+import { setupAppUpdatePrompt } from './update.js?v=20261029-15';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-15';
+import { closeDrawer } from './drawer.js?v=20261029-15';
+import { state, setBoard, toast } from './state.js?v=20261029-15';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261029-15';
+import { loadLog, setupLogView } from './log.js?v=20261029-15';
+import { schedulePulse } from './pulse.js?v=20261029-15';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
@@ -36,6 +37,15 @@ function applyView(view, { updateHash = true } = {}) {
   });
   if (updateHash && currentView() !== active) {
     history.replaceState(null, '', `#view=${active}`);
+  }
+  // The pulse poller serves one id list at a time; the list view narrows it to
+  // its filtered rows, so returning to the board re-schedules the full set.
+  if (active === 'board' && state.data) {
+    const runningIds = [];
+    (state.data.column_order || []).forEach(status => {
+      (state.data.columns[status] || []).forEach(task => { if (task.status === 'running') runningIds.push(task.id); });
+    });
+    schedulePulse(runningIds);
   }
   if (active === 'list') loadList();
   if (active === 'log') loadLog();

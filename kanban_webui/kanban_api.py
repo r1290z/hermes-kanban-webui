@@ -22,7 +22,7 @@ from .serializers import comment_dict, event_dict, links_for, run_dict, task_dic
 from .service_status import service_status
 from .ui_registry import registry
 from .config import get_settings
-from . import app_update, attachments_view, log_view, workflow_drafts, workflow_planner, workflows
+from . import app_update, attachments_view, log_view, pulse_view, workflow_drafts, workflow_planner, workflows
 from .operations import build_operations_summary
 
 router = APIRouter(prefix="/api")
@@ -1209,6 +1209,25 @@ def list_tasks(
         "assignees": facet_assignees,
         "statuses": facet_statuses,
     }
+
+
+@router.get("/pulse")
+def pulse(
+    tasks: str = Query(""),
+    board: Optional[str] = Query(None),
+) -> dict[str, Any]:
+    """Batch run-pulse: elapsed + heartbeat age for the given running tasks.
+
+    Tasks without an active run (or not in `running` status) are simply absent
+    from `pulse`; a task id that was not requested never leaks into the answer
+    because the SELECT filters on the requested id list.
+    """
+    selected = _resolve_board(board)
+    conn = kanban_db.connect(board=selected)
+    try:
+        return pulse_view.build_pulse_payload(conn, tasks)
+    finally:
+        conn.close()
 
 
 @router.get("/log")

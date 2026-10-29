@@ -1,8 +1,9 @@
-import { t } from './i18n.js?v=20261029-13';
-import { escapeHtml } from './markdown.js?v=20261029-13';
-import { openTaskDrawer } from './drawer.js?v=20261029-13';
-import { attachDragHandlers } from './dragdrop.js?v=20261029-13';
-import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261029-13';
+import { t } from './i18n.js?v=20261029-15';
+import { escapeHtml } from './markdown.js?v=20261029-15';
+import { openTaskDrawer } from './drawer.js?v=20261029-15';
+import { attachDragHandlers } from './dragdrop.js?v=20261029-15';
+import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261029-15';
+import { schedulePulse } from './pulse.js?v=20261029-15';
 
 function card(task) {
   const isUnassigned = !task.assignee;
@@ -25,6 +26,7 @@ function card(task) {
     <button type="button" class="dependency-port parent-port" data-link-role="parent" data-link-task-id="${taskId}" title="${parentPortHint}" aria-label="${parentPortHint}"><span>${escapeHtml(t('parent'))}</span></button>
     <div class="card-top"><code>${taskId}</code>${isUnassigned ? `<span class="profile-missing-badge" title="${assigneeHint}" aria-label="${assigneeHint}">⚠ ${escapeHtml(t('profileMissingShort'))}</span>` : ''}<span class="status-dot ${task.status}"></span></div>
     <h3>${escapeHtml(task.title)}</h3>
+    ${task.status === 'running' ? `<div class="pulse-line" data-pulse-id="${taskId}"></div>` : ''}
     ${task.body_preview ? `<p>${escapeHtml(task.body_preview)}</p>` : ''}
     <div class="chips">${assigneeChip}${chips.map(x => `<span>${escapeHtml(x)}</span>`).join('')}${progress}${workflow}</div>
     <div class="card-foot"><span>💬 ${task.comment_count || 0}</span>${Number(task.attachment_count || 0) ? `<span title="${escapeHtml(t('attachments'))}">📎 ${task.attachment_count}</span>` : ''}<span class="relation-badge" title="parents ${parents} · children ${children}">↑ ${parents} ↓ ${children}</span>${task.status === 'running' ? '<strong>LIVE</strong>' : ''}</div>
@@ -43,14 +45,17 @@ export function renderBoard(data) {
   const root = document.getElementById('board');
   const statuses = data.column_order || [];
   root.style.setProperty('--kanban-column-count', String(Math.max(1, statuses.length)));
+  const runningIds = [];
   root.innerHTML = statuses.map(status => {
     const tasks = data.columns[status] || [];
+    tasks.forEach(task => { if (task.status === 'running') runningIds.push(task.id); });
     return `<section class="board-column" data-status="${status}">
       <header><div><h2>${t(status)}</h2><small>${tasks.length}</small></div><button class="mini-add" data-status="${status}">＋</button></header>
       <div class="drop-placeholder"></div>
       <div class="cards">${tasks.length ? tasks.map(card).join('') : `<div class="empty">${t('empty')}</div>`}</div>
     </section>`;
   }).join('');
+  schedulePulse(runningIds);
   root.querySelectorAll('.task-card').forEach(el => {
     const open = () => {
       selectDependencyTask(el.dataset.taskId);

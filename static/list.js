@@ -1,8 +1,9 @@
-import { api } from './api.js?v=20261029-13';
-import { t } from './i18n.js?v=20261029-13';
-import { escapeHtml } from './markdown.js?v=20261029-13';
-import { openTaskDrawer } from './drawer.js?v=20261029-13';
-import { state } from './state.js?v=20261029-13';
+import { api } from './api.js?v=20261029-15';
+import { t } from './i18n.js?v=20261029-15';
+import { escapeHtml } from './markdown.js?v=20261029-15';
+import { openTaskDrawer } from './drawer.js?v=20261029-15';
+import { state } from './state.js?v=20261029-15';
+import { schedulePulse } from './pulse.js?v=20261029-15';
 
 const PAGE_SIZE = 100;
 
@@ -125,6 +126,7 @@ function rowHtml(task) {
     <td data-label="${escapeHtml(t('runs'))}" class="list-count">${escapeHtml(String(task.run_count ?? 0))}</td>
     <td data-label="${escapeHtml(t('comments'))}" class="list-count">${escapeHtml(String(task.comment_count ?? 0))}</td>
     <td data-label="${escapeHtml(t('attachments'))}" class="list-count">${escapeHtml(String(task.attachment_count ?? 0))}</td>
+    <td data-label="${escapeHtml(t('listElapsed'))}" class="list-pulse">${task.status === 'running' ? `<span class="pulse-short" data-pulse-id="${escapeHtml(task.id)}" data-pulse-elapsed></span><span class="pulse-full" data-pulse-id="${escapeHtml(task.id)}"></span>` : ''}</td>
     <td class="list-counts-mobile">${['runs','comments','attachments'].map(key => `<span>${escapeHtml(t(key))}: <b>${escapeHtml(String(task[key === 'runs' ? 'run_count' : key === 'comments' ? 'comment_count' : 'attachment_count'] ?? 0))}</b></span>`).join('')}</td>
   </tr>`;
 }
@@ -147,6 +149,7 @@ function headerHtml(sort, dir) {
     <th class="list-th">${escapeHtml(t('runs'))}</th>
     <th class="list-th">${escapeHtml(t('comments'))}</th>
     <th class="list-th">${escapeHtml(t('attachments'))}</th>
+    <th class="list-th">${escapeHtml(t('listElapsed'))}</th>
   </tr>`;
 }
 
@@ -157,7 +160,7 @@ function renderRows(tasks, append) {
   const empty = body.querySelector('.list-empty-row');
   if (empty) empty.remove();
   if (!tasks.length && !body.children.length) {
-    body.innerHTML = `<tr class="list-empty-row"><td colspan="10">${escapeHtml(t('listEmpty'))}</td></tr>`;
+    body.innerHTML = `<tr class="list-empty-row"><td colspan="11">${escapeHtml(t('listEmpty'))}</td></tr>`;
     return;
   }
   body.insertAdjacentHTML('beforeend', tasks.map(rowHtml).join(''));
@@ -197,11 +200,12 @@ export async function loadList({ append = false } = {}) {
     renderRows(data.tasks, append);
     updateFooter(data);
     populateFacets(data);
+    schedulePulse(data.tasks.filter(task => task.status === 'running').map(task => task.id));
   } catch (err) {
     console.error(err);
     const body = document.getElementById('listBody');
     if (body && !body.children.length) {
-      body.innerHTML = `<tr class="list-empty-row"><td colspan="10">${escapeHtml(err.message || String(err))}</td></tr>`;
+      body.innerHTML = `<tr class="list-empty-row"><td colspan="11">${escapeHtml(err.message || String(err))}</td></tr>`;
     }
   } finally {
     listState.loading = false;

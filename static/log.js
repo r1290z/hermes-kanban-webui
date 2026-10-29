@@ -1,8 +1,9 @@
-import { api } from './api.js?v=20261029-13';
-import { t } from './i18n.js?v=20261029-13';
-import { escapeHtml } from './markdown.js?v=20261029-13';
-import { openTaskDrawer } from './drawer.js?v=20261029-13';
-import { state } from './state.js?v=20261029-13';
+import { api } from './api.js?v=20261029-15';
+import { t } from './i18n.js?v=20261029-15';
+import { escapeHtml } from './markdown.js?v=20261029-15';
+import { openTaskDrawer } from './drawer.js?v=20261029-15';
+import { state } from './state.js?v=20261029-15';
+import { formatDuration } from './duration.js?v=20261029-15';
 
 const PAGE_SIZE = 50;
 
@@ -21,20 +22,6 @@ const logState = {
   outcomes: [],
   kinds: []
 };
-
-function formatDuration(seconds) {
-  if (seconds === null || seconds === undefined) return '—';
-  const total = Math.max(0, Math.round(Number(seconds)));
-  if (total < 60) return `${total}с`;
-  if (total < 3600) {
-    const minutes = Math.floor(total / 60);
-    const rest = total % 60;
-    return `${minutes}м ${String(rest).padStart(2, '0')}с`;
-  }
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  return `${hours}ч ${String(minutes).padStart(2, '0')}м`;
-}
 
 function outcomeLabel(outcome) {
   if (!outcome) return t('logRunning');

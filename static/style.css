@@ -310,6 +310,15 @@ textarea { width: 100%; resize: vertical; }
 .list-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 4px 0; }
 .list-counts-mobile { display: none; }
 
+/* ===== Run pulse (board card + list column) ===== */
+/* NOTE: must stay ABOVE the mobile list block below — same specificity,
+   and a later base rule would override the media-query overrides. */
+.pulse-line { font-size: 11.5px; color: var(--muted); margin: -6px 0 4px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; min-height: 1em; }
+.pulse-line.is-overdue { color: var(--danger, #f87171); font-weight: 700; }
+td.list-pulse { color: var(--muted); font-variant-numeric: tabular-nums; }
+td.list-pulse .pulse-full { display: none; }
+td.list-pulse .is-overdue { color: var(--danger, #f87171); font-weight: 700; }
+
 /* Mobile: rows become cards — no sideways scroll at 390px. */
 @media (max-width: 700px) {
   .list-table, .list-table tbody, .list-table tr, .list-table td { display: block; width: 100%; }
@@ -326,7 +335,11 @@ textarea { width: 100%; resize: vertical; }
   .list-row td:nth-child(2) { order: 3; }
   .list-row td:nth-child(4) { order: 1; }
   .list-row td:nth-child(8), .list-row td:nth-child(9), .list-row td:nth-child(10) { display: none; }
-  td.list-counts-mobile { display: flex; order: 4; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 11px; padding: 3px 12px; }
+  /* "идёт" column: on a phone it renders the full board-style pulse line. */
+  td.list-pulse { display: block; order: 4; padding: 3px 12px; font-size: 12px; }
+  td.list-pulse .pulse-short { display: none; }
+  td.list-pulse .pulse-full { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  td.list-counts-mobile { display: flex; order: 5; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 11px; padding: 3px 12px; }
   td.list-counts-mobile b { color: var(--muted); font-weight: 600; }
   #listSearch { width: 100%; }
   .multiselect-panel { left: auto; right: 0; }

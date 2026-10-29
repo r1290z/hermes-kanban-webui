@@ -1,4 +1,4 @@
-import { t } from './i18n.js?v=20261029-13';
+import { t } from './i18n.js?v=20261029-15';
 
 export const THEME_STORAGE_KEY = 'kanbanTheme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';

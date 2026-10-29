@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261029-13';
-import { t } from './i18n.js?v=20261029-13';
-import { escapeHtml } from './markdown.js?v=20261029-13';
-import { openTaskDrawer } from './drawer.js?v=20261029-13';
-import { state, toast } from './state.js?v=20261029-13';
+import { api } from './api.js?v=20261029-15';
+import { t } from './i18n.js?v=20261029-15';
+import { escapeHtml } from './markdown.js?v=20261029-15';
+import { openTaskDrawer } from './drawer.js?v=20261029-15';
+import { state, toast } from './state.js?v=20261029-15';
 
 function panel() { return document.getElementById('opsPanel'); }
 function toggleButton() { return document.getElementById('opsToggleBtn'); }
@@ -163,13 +163,8 @@ function taskLink(task) {
   return `<button class="ops-task-link" type="button" data-ops-task-id="${escapeHtml(task.id || '')}"><code>${escapeHtml(task.id || '')}</code><span>${escapeHtml(task.title || '')}</span></button>`;
 }
 
-export function formatDuration(seconds) {
-  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return '—';
-  const value = Math.max(0, Number(seconds));
-  if (value < 60) return `${Math.round(value)}s`;
-  if (value < 3600) return `${Math.floor(value / 60)}m ${Math.round(value % 60)}s`;
-  return `${Math.floor(value / 3600)}h ${Math.floor((value % 3600) / 60)}m`;
-}
+import { formatDuration } from './duration.js?v=20261029-15';
+export { formatDuration };
 
 export function formatTimestamp(epoch) {
   if (!epoch) return '—';

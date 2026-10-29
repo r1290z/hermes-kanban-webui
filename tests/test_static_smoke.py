@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
 import pytest
+
+
+def asset_version() -> str:
+    """Cache-busting token lives in index.html; tests must follow it, not pin it."""
+    root = Path(__file__).resolve().parents[1]
+    index = (root / 'static' / 'index.html').read_text(encoding='utf-8')
+    match = re.search(r'app\.js\?v=([^"\']+)', index)
+    assert match, 'index.html must reference app.js with a cache-busting version'
+    return match.group(1)
 
 
 def test_static_shell_contains_required_ui_contracts(client):
@@ -40,7 +50,7 @@ def test_app_update_static_contract():
     ]:
         assert phrase in index
 
-    assert './update.js?v=20260508-02' in app
+    assert f'./update.js?v={asset_version()}' in app
     assert 'setupAppUpdatePrompt' in app
     for phrase in ['appUpdateStatus', '/api/app/update-status', 'applyAppUpdate', '/api/app/update']:
         assert phrase in api
@@ -82,9 +92,9 @@ def test_dark_mode_static_contract():
 
     assert 'id="themeToggle"' in index
     assert 'aria-pressed="false"' in index
-    assert 'style.css?v=20260508-02' in index
-    assert 'app.js?v=20260508-02' in index
-    assert './theme.js?v=20260508-02' in app
+    assert f'style.css?v={asset_version()}' in index
+    assert f'app.js?v={asset_version()}' in index
+    assert f'./theme.js?v={asset_version()}' in app
     assert 'setupThemeToggle' in app
     assert 'updateThemeToggleLabel' in app
     assert 'kanbanTheme' in theme
@@ -231,8 +241,8 @@ def test_unassigned_tasks_are_visually_flagged():
         assert key in i18n
     for css_class in ['.task-card.is-unassigned', '.profile-missing-badge', '.chips .missing-assignee-chip']:
         assert css_class in style
-    assert './board.js?v=20260508-02' in app
-    assert './i18n.js?v=20260508-02' in board
+    assert f'./board.js?v={asset_version()}' in app
+    assert f'./i18n.js?v={asset_version()}' in board
     for token in ['--warning-soft', '--warning-ring']:
         assert token in tokens
 
@@ -248,7 +258,7 @@ def test_operations_dashboard_static_contract():
 
     for phrase in ['id="opsToggleBtn"', 'id="opsPanel"']:
         assert phrase in index
-    assert './operations.js?v=20260508-02' in app
+    assert f'./operations.js?v={asset_version()}' in app
     for phrase in ['opsSummary', '/api/ops/summary']:
         assert phrase in api
     for phrase in ['renderOperationsPanel', 'setupOperationsPanel', 'retry_queue', 'blocked_after_retries', 'openTaskDrawer']:

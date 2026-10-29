@@ -61,17 +61,23 @@ except Exception as exc:  # pragma: no cover - depends on host install
 
 
 def _bridge_facade_gaps() -> None:
-    """Hermes split ``kanban_db`` into a facade + siblings; two names moved.
+    """Hermes split ``kanban_db`` into a facade + siblings; some names moved out.
 
-    ``connect`` now lives in ``hermes_cli.kanban_db_connect`` and is not
-    re-exported, and ``active_run`` has no counterpart at all — ``list_runs``
-    carries the same information. Without this shim every board request dies on
-    ``AttributeError: module 'hermes_cli.kanban_db' has no attribute 'connect'``.
+    ``connect`` now lives in ``hermes_cli.kanban_db_connect``, the notify helpers in
+    ``kanban_db_notify``, heartbeat/dispatch in ``kanban_db_dispatch`` — none of them
+    are re-exported by the facade. ``active_run`` has no counterpart at all.
+    Without this shim every board request dies on ``AttributeError``.
     """
-    if not hasattr(kanban_db, "connect"):
-        from hermes_cli.kanban_db_connect import connect  # type: ignore
+    from hermes_cli import kanban_db_connect, kanban_db_dispatch, kanban_db_notify
 
-        kanban_db.connect = connect  # type: ignore[attr-defined]
+    for module, names in (
+        (kanban_db_connect, ("connect",)),
+        (kanban_db_notify, ("add_notify_sub", "list_notify_subs", "remove_notify_sub")),
+        (kanban_db_dispatch, ("heartbeat_worker", "dispatch_once")),
+    ):
+        for name in names:
+            if not hasattr(kanban_db, name) and hasattr(module, name):
+                setattr(kanban_db, name, getattr(module, name))
 
     if not hasattr(kanban_db, "active_run"):
 

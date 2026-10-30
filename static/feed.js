@@ -6,11 +6,11 @@
 // «Всё» — весь поток; «Блокировки» — только блокировки. Инлайн-действия есть
 // только под «Требует меня» и только там, где действие действительно доступно
 // сейчас: разблокировать, назначить, посмотреть лог просроченного прогона.
-import { api } from './api.js?v=20261030-4';
-import { t, lang } from './i18n.js?v=20261030-4';
-import { escapeHtml } from './markdown.js?v=20261030-4';
-import { state, toast } from './state.js?v=20261030-4';
-import { openTaskDrawer } from './drawer.js?v=20261030-4';
+import { api, isOfflineError } from './api.js?v=20261030-8';
+import { t, lang } from './i18n.js?v=20261030-8';
+import { escapeHtml } from './markdown.js?v=20261030-8';
+import { state, toast } from './state.js?v=20261030-8';
+import { openTaskDrawer } from './drawer.js?v=20261030-8';
 
 // Событий внимания мало (одно на десятки heartbeat'ов и spawn'ов), поэтому первая
 // страница широкая: узкое окно оставило бы дефолтный чип пустым при живых данных.
@@ -69,6 +69,7 @@ const feed = {
   paged: false,
   loading: false,
   error: null,
+  offline: false,
   now: Math.floor(Date.now() / 1000)
 };
 
@@ -302,9 +303,13 @@ function emptyText() {
   return t('logEmpty');
 }
 
+// «нет сети» вместо «не удалось загрузить», когда пропала связь: метку ставит
+// api.js (упавший fetch или 503 {"offline": true} от service worker).
 function errorHtml() {
+  const label = feed.offline ? t('noNetwork') : t('loadFailed');
   return `<div class="feed-error" role="alert" title="${escapeHtml(feed.error || '')}">
-    <span class="feed-error-text">${escapeHtml(t('loadFailed'))}</span>
+    <span class="feed-error-text">${escapeHtml(label)}</span>
+    <span class="feed-error-sep" aria-hidden="true">·</span>
     <button type="button" class="button ghost" data-feed-retry>${escapeHtml(t('retry'))}</button>
   </div>`;
 }
@@ -320,7 +325,9 @@ export function renderFeed(events = feed.events) {
   root.innerHTML = [
     chipsHtml(),
     feed.error ? errorHtml() : '',
-    days.length ? days.map(dayHtml).join('') : `<p class="feed-empty">${escapeHtml(emptyText())}</p>`,
+    // Пустое состояние при ошибке не рисуем: «ничего не ждёт решения» рядом с
+    // «нет сети» — это утверждение о данных, которых мы не получили.
+    days.length ? days.map(dayHtml).join('') : (feed.error ? '' : `<p class="feed-empty">${escapeHtml(emptyText())}</p>`),
     more
   ].join('');
   bind(root);
@@ -394,8 +401,10 @@ export async function loadFeed({ append = false } = {}) {
     feed.hasMore = Boolean(page.has_more);
     feed.paged = append;
     feed.error = null;
+    feed.offline = false;
   } catch (err) {
     feed.error = err && err.message ? err.message : String(err);
+    feed.offline = isOfflineError(err);
     if (!append) {
       feed.events = [];
       feed.hasMore = false;

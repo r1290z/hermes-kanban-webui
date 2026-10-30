@@ -4,9 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b0c0e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Kanban" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon-180.png" />
   <title>Hermes KanbanWebUI</title>
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-4" />
-  <link rel="stylesheet" href="/static/style.css?v=20261030-4" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-8" />
+  <link rel="stylesheet" href="/static/style.css?v=20261030-8" />
 </head>
 <body>
   <div class="app-shell">
@@ -30,6 +37,19 @@
       </div>
     </header>
 
+    <!-- Полоса связи: появляется, когда service worker отдал закэшированный
+         ответ (см. api.js → kanban:connection). Без неё вчерашняя доска
+         выглядела бы свежей. -->
+    <div class="offline-bar" id="offlineBar" hidden role="status">
+      <span class="offline-bar-text" id="offlineBarText"></span>
+      <button class="button ghost" type="button" id="offlineRetry" data-i18n="retry">Повторить</button>
+    </div>
+
+    <div class="ios-hint" id="iosInstallHint" hidden>
+      <span class="ios-hint-text" data-i18n="iosInstallHint">Поделиться → На экран «Домой»</span>
+      <button class="button ghost" type="button" data-ios-hint-close aria-label="Закрыть">&#215;</button>
+    </div>
+
     <section class="more-panel" id="morePanel" hidden aria-label="more controls">
       <div class="more-row">
         <span class="board-current" id="boardNameFull"></span>
@@ -43,6 +63,9 @@
         <button class="button ghost" id="opsToggleBtn" type="button" data-i18n="operations" aria-expanded="false">Operations</button>
         <button class="button ghost" id="workflowBtn" type="button" data-i18n="workflowCreate">Создать AI workflow</button>
         <button class="button ghost" id="bulkBtn" type="button" data-i18n="bulkCreate">Массовое создание</button>
+        <!-- Появляется только по beforeinstallprompt (pwa.js): на iOS события нет,
+             там работает подсказка «Поделиться → На экран „Домой“» ниже. -->
+        <button class="button ghost" id="installBtn" type="button" data-i18n="installApp" hidden>Установить</button>
       </div>
       <div class="more-row">
         <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
@@ -236,6 +259,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261030-4"></script>
+  <script type="module" src="/static/app.js?v=20261030-8"></script>
 </body>
 </html>

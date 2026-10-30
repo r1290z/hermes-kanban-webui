@@ -6,13 +6,16 @@
 // Четыре блока в фиксированном порядке: живые прогоны, требует внимания,
 // очередь, завершено. Блоки рисуются всегда — при нуле прогонов, при ошибке
 // сети и при 401 в них стоит осмысленный текст, пустого экрана не бывает.
-import { api } from './api.js?v=20261030-4';
-import { t } from './i18n.js?v=20261030-4';
-import { escapeHtml } from './markdown.js?v=20261030-4';
-import { state, toast } from './state.js?v=20261030-4';
-import { openTaskDrawer } from './drawer.js?v=20261030-4';
-import { schedulePulse } from './pulse.js?v=20261030-4';
-import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-4';
+// Пустая секция (кроме живых прогонов, у них своя строка простоя) сжимается в
+// одну строку-статус «Требует внимания — нет»: заголовок-карточка с «Нет»
+// внутри стоит дороже, чем нулевая информация в ней.
+import { api, isOfflineError } from './api.js?v=20261030-8';
+import { t } from './i18n.js?v=20261030-8';
+import { escapeHtml } from './markdown.js?v=20261030-8';
+import { state, toast } from './state.js?v=20261030-8';
+import { openTaskDrawer } from './drawer.js?v=20261030-8';
+import { schedulePulse } from './pulse.js?v=20261030-8';
+import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-8';
 
 const QUEUE_STATUSES = ['scheduled', 'todo', 'ready', 'triage'];
 const DAY_SECONDS = 86400;
@@ -23,6 +26,7 @@ const PENDING = '—';
 // берётся и «последний завершился N назад» для состояния простоя.
 let logRuns = [];
 let nowError = null;
+let nowOffline = false;
 let pulseNow = Math.floor(Date.now() / 1000);
 let last = { data: null, pulse: null };
 let expanded = { 'now-queue': false, 'now-done': false };
@@ -82,9 +86,15 @@ function moreButton(kind) {
   return `<button type="button" class="button ghost now-more" data-now-more="${kind}">${escapeHtml(t('showAll'))}</button>`;
 }
 
-function errorBlock() {
-  return `<div class="now-error" role="alert" title="${escapeHtml(nowError || '')}">
-    <span>${escapeHtml(t('loadFailed'))}</span>
+// Ошибка рисуется в каждом блоке: показывать «нет активных прогонов», когда
+// ответ вообще не пришёл, — врать. «нет сети» вместо «не удалось загрузить»
+// ставит метку api.js (обрыв fetch или 503 {"offline": true} от service worker).
+function errorBlock({ alert = false } = {}) {
+  const label = nowOffline ? t('noNetwork') : t('loadFailed');
+  const role = alert ? ' role="alert"' : '';
+  return `<div class="now-error"${role} title="${escapeHtml(nowError || '')}">
+    <span>${escapeHtml(label)}</span>
+    <span class="now-error-sep" aria-hidden="true">·</span>
     <button type="button" class="button ghost" data-now-retry>${escapeHtml(t('retry'))}</button>
   </div>`;
 }
@@ -406,9 +416,11 @@ async function fetchAndRender() {
       .filter(run => !run.started_at || Number(run.started_at) >= serverNow - DAY_SECONDS)
       .sort((a, b) => (Number(b.started_at) || 0) - (Number(a.started_at) || 0));
     nowError = null;
+    nowOffline = false;
     renderNow(data, pulse);
   } catch (err) {
     nowError = err && err.message ? err.message : String(err);
+    nowOffline = isOfflineError(err);
     logRuns = [];
     renderNow(null, null);
   }

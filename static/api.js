@@ -26,6 +26,20 @@ function errorMessage(data, fallback) {
   return message;
 }
 
+// Обрыв сети — не ошибка сервера: вью показывает «нет сети · Повторить», а не
+// «не удалось загрузить». Метка ставится и на упавший fetch, и на ответ
+// 503 {"offline": true} от service worker (см. static/sw.js).
+export function isOfflineError(error) {
+  if (error && error.offline === true) return true;
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+function offlineError(message) {
+  const error = new Error(message || 'нет сети');
+  error.offline = true;
+  return error;
+}
+
 // LAN mode: the server asks for a token and the browser has nowhere to enter it.
 // A blocking window.prompt() here would freeze page load (the first API call fires
 // during boot), so the ask is an inline bar that reloads once a token is saved.
@@ -68,8 +82,26 @@ function askForToken() {
   });
 }
 
+// Состояние связи по последнему ответу: офлайн с кэшем или живой ответ.
+// Метку ставит service worker (X-Kanban-Offline), поэтому «данные показаны» и
+// «данные свежие» — разные вещи, и разницу видно в интерфейсе.
+let connectionState = { offline: false, cachedAt: '' };
+
+export function offlineInfo() {
+  return connectionState;
+}
+
+function trackConnection(res) {
+  const stale = res.headers.get('X-Kanban-Offline') === '1';
+  const next = { offline: stale, cachedAt: stale ? (res.headers.get('X-Kanban-Cached-At') || '') : '' };
+  const changed = next.offline !== connectionState.offline || next.cachedAt !== connectionState.cachedAt;
+  connectionState = next;
+  if (changed) document.dispatchEvent(new CustomEvent('kanban:connection', { detail: next }));
+  return res;
+}
+
 export async function request(path, options = {}) {
-  let res = await send(path, options);
+  let res = trackConnection(await send(path, options));
   if (res.status === 401) {
     askForToken();
     throw new Error('нужен токен доступа');
@@ -77,14 +109,17 @@ export async function request(path, options = {}) {
   const text = await res.text();
   let data = {};
   try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
-  if (!res.ok) throw new Error(errorMessage(data, res.statusText));
+  if (!res.ok) {
+    if (data && data.offline) throw offlineError(errorMessage(data, res.statusText));
+    throw new Error(errorMessage(data, res.statusText));
+  }
   return data;
 }
 
 // Like request(), but returns the raw Response for blob/streams (attachment
 // downloads and previews). The token must stay in a header — never the URL.
 export async function requestRaw(path, options = {}) {
-  let res = await send(path, options);
+  let res = trackConnection(await send(path, options));
   if (res.status === 401) {
     askForToken();
     throw new Error('нужен токен доступа');
@@ -105,7 +140,11 @@ async function send(path, options) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }
-  return fetch(path, { ...options, headers, body });
+  return fetch(path, { ...options, headers, body }).catch(err => {
+    // fetch отклоняется только на сетевом уровне (обрыв, офлайн, DNS):
+    // HTTP-статусы приходят обычным Response и разбираются выше.
+    throw offlineError(err && err.message);
+  });
 }
 
 function boardQuery(board, extra = {}) {

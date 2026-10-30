@@ -1,5 +1,5 @@
-import { api } from './api.js?v=20261030-4';
-import { t } from './i18n.js?v=20261030-4';
+import { api } from './api.js?v=20261030-8';
+import { t } from './i18n.js?v=20261030-8';
 
 const DISMISSED_UPDATE_KEY = 'kanbanDismissedUpdateCommit';
 let latestStatus = null;
@@ -115,4 +115,62 @@ export function setupAppUpdatePrompt() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') checkForUpdates();
   });
+}
+
+// ===== Обновление оболочки (service worker) =====
+//
+// Новый service worker активируется только по сообщению со страницы, поэтому
+// без этого баннера телефон с открытой вкладкой остался бы на старом
+// интерфейсе до полного перезапуска браузера. controllerchange без баннера не
+// остаётся: даже если воркер активировался сам, обновление видно и его можно
+// применить одной кнопкой.
+const SW_RELOADING_KEY = 'kanbanSwReloading';
+
+function ensureSwBanner() {
+  let banner = document.getElementById('swUpdateBanner');
+  if (banner) return banner;
+  banner = document.createElement('div');
+  banner.id = 'swUpdateBanner';
+  banner.className = 'sw-update-banner';
+  banner.hidden = true;
+  const text = document.createElement('span');
+  text.className = 'sw-update-text';
+  text.textContent = t('swUpdateAvailable');
+  const reload = document.createElement('button');
+  reload.type = 'button';
+  reload.className = 'button primary';
+  reload.dataset.swReload = '';
+  reload.textContent = t('swUpdateReload');
+  banner.append(text, reload);
+  document.body.appendChild(banner);
+  return banner;
+}
+
+async function activateWaitingWorker() {
+  sessionStorage.setItem(SW_RELOADING_KEY, '1');
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (registration && registration.waiting) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    // Страховка: если воркер почему-то не переключился, кнопка не «залипает».
+    setTimeout(() => location.reload(), 1500);
+    return;
+  }
+  location.reload();
+}
+
+export function setupServiceWorkerUpdateBanner() {
+  if (!('serviceWorker' in navigator)) return;
+  const banner = ensureSwBanner();
+  // Первая установка воркера тоже даёт controllerchange — это не обновление,
+  // показывать баннер нечего.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  const show = () => { banner.hidden = false; };
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    if (sessionStorage.getItem(SW_RELOADING_KEY)) return;
+    show();
+  });
+  document.addEventListener('kanban:sw-update', show);
+  banner.querySelector('[data-sw-reload]').addEventListener('click', activateWaitingWorker);
 }

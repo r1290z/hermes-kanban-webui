@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261030-4';
-import { t, applyI18n } from './i18n.js?v=20261030-4';
-import { renderMarkdown, escapeHtml } from './markdown.js?v=20261030-4';
-import { renderMonitor } from './monitor.js?v=20261030-4';
-import { state, toast } from './state.js?v=20261030-4';
+import { api } from './api.js?v=20261030-8';
+import { t, applyI18n } from './i18n.js?v=20261030-8';
+import { renderMarkdown, escapeHtml } from './markdown.js?v=20261030-8';
+import { renderMonitor } from './monitor.js?v=20261030-8';
+import { state, toast } from './state.js?v=20261030-8';
 
 const PHONE_QUERY = '(max-width: 759px)';
 

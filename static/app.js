@@ -1,19 +1,20 @@
-import { api } from './api.js?v=20261030-4';
-import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-4';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-4';
-import { renderBoard } from './board.js?v=20261030-4';
-import { setupDependencyControls } from './dependency-lines.js?v=20261030-4';
-import { setupForms } from './forms.js?v=20261030-4';
-import { setupMobileFallback, setupMobileShell } from './mobile.js?v=20261030-4';
-import { setupAppUpdatePrompt } from './update.js?v=20261030-4';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-4';
-import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-4';
-import { state, setBoard, toast } from './state.js?v=20261030-4';
-import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-4';
-import { loadLog, setupLogView } from './log.js?v=20261030-4';
-import { schedulePulse } from './pulse.js?v=20261030-4';
-import { loadNow } from './now.js?v=20261030-4';
-import { loadFeed, refreshFeed, setupFeedView } from './feed.js?v=20261030-4';
+import { api, isOfflineError, offlineInfo } from './api.js?v=20261030-8';
+import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-8';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-8';
+import { renderBoard } from './board.js?v=20261030-8';
+import { setupDependencyControls } from './dependency-lines.js?v=20261030-8';
+import { setupForms } from './forms.js?v=20261030-8';
+import { setupMobileFallback, setupMobileShell } from './mobile.js?v=20261030-8';
+import { setupAppUpdatePrompt, setupServiceWorkerUpdateBanner } from './update.js?v=20261030-8';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-8';
+import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-8';
+import { state, setBoard, toast } from './state.js?v=20261030-8';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-8';
+import { loadLog, setupLogView } from './log.js?v=20261030-8';
+import { schedulePulse } from './pulse.js?v=20261030-8';
+import { loadNow } from './now.js?v=20261030-8';
+import { loadFeed, refreshFeed, setupFeedView } from './feed.js?v=20261030-8';
+import { setupPwa } from './pwa.js?v=20261030-8';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
@@ -87,6 +88,9 @@ export function applyView(view, { updateHash = true } = {}) {
   if (updateHash) writeHash(viewUrl(active));
   // Пульс обслуживает один список id за раз: вид «Список» сужает его до своих строк,
   // поэтому возврат на доску пересобирает полный набор.
+  // Доска без данных — не «нет задач»: либо ответ ещё не пришёл, либо не пришёл
+  // вовсе. Ошибку рисует load(), сюда доходит уже готовый блок с «Повторить».
+  if (active === 'board' && boardError) renderBoardError();
   if (active === 'board' && state.data) {
     const runningIds = [];
     (state.data.column_order || []).forEach(status => {
@@ -242,7 +246,44 @@ function renderAssigneeControls(data) {
   }
 }
 
+// Последняя ошибка загрузки доски: null, пока данные приходят. Отдельная
+// переменная, потому что пустая доска и недоступная доска выглядят одинаково —
+// без неё офлайн рисовал бы «задач нет», то есть врал про содержимое.
+let boardError = null;
+
 export async function load() {
+  try {
+    await fetchBoard();
+    boardError = null;
+  } catch (err) {
+    // Токен спрашивает сам api.js (модальная полоса), остальное — сюда:
+    // обрыв сети подписываем «нет сети», серверную ошибку — «не удалось загрузить».
+    boardError = { message: err && err.message ? err.message : String(err), offline: isOfflineError(err) };
+    renderBoardError();
+    // Доска уже показана — колонки не трогаем, но человек должен знать, что
+    // цифры в них не свежие: полоса «нет сети · Повторить» поверх.
+    if (state.data && boardError.offline) showOfflineNotice();
+    console.warn('board load failed:', err);
+  }
+}
+
+// Блок ошибки на месте колонок: текст + «Повторить». Рисуется только когда
+// данных ещё нет (первая загрузка, пустая оболочка в офлайне). Если доска уже
+// показана и упал очередной poll — колонки не трогаем: устаревшая доска полезнее
+// пустого экрана, а про обрыв скажет полоса #offlineBar.
+function renderBoardError() {
+  const board = document.getElementById('board');
+  if (!board || !boardError || state.data) return;
+  const label = boardError.offline ? t('noNetwork') : t('loadFailed');
+  board.innerHTML = `<p class="view-placeholder board-error" role="alert" title="${String(boardError.message).replace(/"/g, '&quot;')}">
+    <span>${label}</span>
+    <span class="now-error-sep" aria-hidden="true">·</span>
+    <button type="button" class="button ghost" data-board-retry>${t('retry')}</button>
+  </p>`;
+  board.querySelector('[data-board-retry]')?.addEventListener('click', () => load());
+}
+
+async function fetchBoard() {
   await api.config().then(cfg => { state.config = cfg; });
   await loadBoards();
   const params = {
@@ -267,12 +308,53 @@ export async function load() {
     boardStatusSelect.setOptions((data.column_order || []).map(status => ({ value: status, label: t(status) })));
   }
   await refreshOperationsPanel();
+  renderOfflineBar();
   if (currentView() === 'list') loadList();
   if (currentView() === 'log') loadLog();
   if (currentView() === 'now') loadNow();
   // Лента обновляется только пока открыта её первая страница: иначе poll
   // сбрасывал бы подгрузку «Показать ещё» (см. refreshFeed).
   if (currentView() === 'feed') refreshFeed();
+}
+
+// Полоса «нет сети · данные от HH:MM · Повторить»: показывается, когда ответ
+// пришёл из кэша service worker'а. Час берём из заголовка Date закэшированного
+// ответа, чтобы человек видел, насколько данные старые.
+function renderOfflineBar() {
+  const bar = document.getElementById('offlineBar');
+  const text = document.getElementById('offlineBarText');
+  if (!bar || !text) return;
+  const info = offlineInfo();
+  if (!info.offline) {
+    bar.hidden = true;
+    return;
+  }
+  let clock = '';
+  const stamp = Date.parse(info.cachedAt || '');
+  if (!Number.isNaN(stamp)) {
+    clock = new Date(stamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  text.textContent = clock ? `${t('noNetwork')} · ${clock}` : t('noNetwork');
+  bar.hidden = false;
+}
+
+function setupOfflineBar() {
+  document.addEventListener('kanban:connection', renderOfflineBar);
+  window.addEventListener('online', renderOfflineBar);
+  window.addEventListener('offline', showOfflineNotice);
+  document.getElementById('offlineRetry')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('kanban:refresh'));
+  });
+}
+
+// Полоса без времени: сеть пропала, но кэша под рукой может и не быть (тогда
+// время брать не откуда). «Повторить» уже стоит в самой полосе.
+function showOfflineNotice() {
+  const bar = document.getElementById('offlineBar');
+  const text = document.getElementById('offlineBarText');
+  if (!bar || !text) return;
+  text.textContent = t('noNetwork');
+  bar.hidden = false;
 }
 
 function setupControls() {
@@ -331,6 +413,9 @@ async function main() {
   setupForms(load);
   setupMobileFallback();
   setupAppUpdatePrompt();
+  setupServiceWorkerUpdateBanner();
+  setupOfflineBar();
+  setupPwa();
   setupOperationsPanel();
   const storedAssignee = localStorage.getItem('lastAssignee') || '';
   const taskAssignee = document.getElementById('taskAssignee');

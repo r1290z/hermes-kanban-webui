@@ -1,6 +1,6 @@
-import { api } from './api.js?v=20261029-15';
-import { t } from './i18n.js?v=20261029-15';
-import { escapeHtml, renderMarkdown } from './markdown.js?v=20261029-15';
+import { api } from './api.js?v=20261030-1';
+import { t } from './i18n.js?v=20261030-1';
+import { escapeHtml, renderMarkdown } from './markdown.js?v=20261030-1';
 
 function fmtAge(seconds) {
   if (seconds == null) return '—';

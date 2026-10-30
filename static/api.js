@@ -36,18 +36,18 @@ function askForToken() {
   bar.innerHTML = `
     <style>
       #tokenBar{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;
-        justify-content:center;background:rgba(8,10,18,.82);backdrop-filter:blur(3px)}
-      #tokenBar .box{background:var(--card,#151a26);border:1px solid var(--border,#2a3244);
-        border-radius:14px;padding:26px 28px;max-width:420px;width:calc(100% - 40px);
-        font-family:inherit;color:var(--foreground,#e8ecf4);box-shadow:0 24px 60px rgba(0,0,0,.45)}
+        justify-content:center;background:var(--bg,#080a12)}
+      #tokenBar .box{background:var(--surface,#151a26);border:1px solid var(--line-strong,#2a3244);
+        border-radius:var(--r-md,8px);padding:26px 28px;max-width:420px;width:calc(100% - 40px);
+        font-family:inherit;color:var(--ink,#e8ecf4);box-shadow:var(--shadow-overlay)}
       #tokenBar h3{margin:0 0 6px;font-size:17px}
       #tokenBar p{margin:0 0 16px;font-size:13px;opacity:.7;line-height:1.5}
-      #tokenBar input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:9px;
-        border:1px solid var(--border,#2a3244);background:rgba(0,0,0,.25);
+      #tokenBar input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:var(--r-sm,5px);
+        border:1px solid var(--line-strong,#2a3244);background:var(--surface-2,#111417);
         color:inherit;font:inherit;font-size:14px}
-      #tokenBar button{margin-top:12px;width:100%;padding:10px;border-radius:9px;border:0;
-        background:#3b82f6;color:#fff;font:inherit;font-weight:600;cursor:pointer}
-      #tokenBar .err{margin-top:10px;font-size:12px;color:#f87171;min-height:1em}
+      #tokenBar button{margin-top:12px;width:100%;padding:10px;border-radius:var(--r-sm,5px);border:0;
+        background:var(--run,#3b82f6);color:var(--on-accent,#fff);font:inherit;font-weight:600;cursor:pointer}
+      #tokenBar .err{margin-top:10px;font-size:12px;color:var(--danger,#f87171);min-height:1em}
     </style>
     <div class="box">
       <h3>Нужен токен доступа</h3>

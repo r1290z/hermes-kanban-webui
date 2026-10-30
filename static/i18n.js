@@ -6,7 +6,7 @@ export const labels = {
     bulkCreate: '일괄 추가', boardName: '보드 이름', description: '설명', cancel: '취소', bulkHint: '한 줄에 작업 하나씩 입력하세요.', loading: '불러오는 중…',
     workflow: 'Workflow', workflowCreate: 'AI Workflow 생성', workflowDesignerHint: '프롬프트와 첨부파일로 작업 DAG를 설계한 뒤 승인 시 실제 Kanban task로 적용합니다.', workflowPrompt: 'Workflow 프롬프트', workflowPromptPlaceholder: '목표, 산출물, 제약, 원하는 단계 수를 설명하세요', workflowPlannerProfile: 'Planner 프로필', workflowAttachments: '첨부파일', workflowPlan: '설계', workflowPlanning: 'AI가 workflow 초안을 설계하는 중…', workflowRevise: '수정', workflowRevisionPlaceholder: '변경할 단계/담당 프로필/의존성을 설명하세요', workflowApply: '적용', workflowDraftStatus: 'Draft 상태', workflowDraftEmpty: '프롬프트를 입력하고 설계를 누르면 초안이 표시됩니다.', workflowNotApplyable: '아직 적용할 수 없는 초안입니다. 질문을 해결한 뒤 수정 요청을 보내세요.', workflowInstance: 'Instance ID', workflowStep: '현재 단계', workflowSteps: '단계',
     updateAvailable: '새 업데이트 사용 가능', updateTitle: 'KanbanWebUI 업데이트', updateApply: '업데이트 후 재시작', updateLater: '나중에', updateChecking: '업데이트 상태 확인 중…', updateRestarting: '업데이트 적용 중… 서버가 재시작되면 자동으로 새로고침합니다.', updateBlocked: '자동 업데이트 불가', updateNoCommits: '커밋 목록 없음',
-    scheduled: '백로그', triage: '분류', todo: '대기', ready: '준비', running: '실행중', blocked: '막힘', done: '완료', archived: '보관',
+    scheduled: '백로그', triage: '분류', todo: '대기', ready: 'Ready', running: '실행중', blocked: '막힘', done: '완료', archived: '보관',
     title: '제목', body: '본문', noDescription: '설명 없음', priority: '우선순위', status: '상태', workspace: '워크스페이스', createdBy: '생성자',
     comments: '댓글', events: '이벤트', runs: '런', monitor: 'Live Run Monitor', context: '컨텍스트', log: '로그', workerLog: 'Worker 로그',
     dependencies: '의존성', parents: '부모', children: '자식', parent: '부모', child: '자식', chooseTask: '작업 선택', none: '없음', remove: '삭제',
@@ -19,7 +19,12 @@ export const labels = {
     viewBoard: '보드', viewList: '목록', viewLog: '로그', logInDevelopment: '개발 중입니다', listEmpty: '작업이 없습니다', listTotal: '전체', listShowMore: '더 보기', listAssignee: '담당자', listUpdated: '수정', listSortAsc: '오름차순', listSortDesc: '내림차순', multiselectAll: '전체', allStatuses: '모든 상태', tenant: '테넌트', attachments: '첨부파일', attachmentLost: '파일 없음', attachmentAdd: '파일 첨부', download: '다운로드', listSearchPlaceholder: '제목, 본문, ID 검색', listElapsed: '진행',
     unitSec: '초', unitMin: '분', unitHour: '시간', pulseRunning: '실행', pulseHeartbeat: '맥박', pulseAgo: '전', pulseNoHeartbeat: '맥박 없음',
     logRuns: '실행', logEventsMode: '이벤트', logSinceAll: '전체 기간', logSinceToday: '오늘', logSince7d: '7일', logSince30d: '30일', logSearchPlaceholder: '요약 텍스트 검색', logShowHeartbeat: 'heartbeat 표시', logAllProfiles: '모든 프로필', logAllOutcomes: '모든 결과', logAllKinds: '모든 이벤트', logEmpty: '기록이 없습니다', logShown: '표시됨', logDetails: '세부 정보', logHideDetails: '접기', logOpenTask: '카드 열기', logRunning: '실행 중',
-    outcome_completed: '완료', outcome_blocked: '막힘', outcome_crashed: '크래시', outcome_timed_out: '시간 초과', outcome_spawn_failed: '실행 실패', outcome_gave_up: '포기', outcome_reclaimed: '회수됨', outcome_running: '실행 중', outcome_scheduled: '예약됨', outcome_released: '반환됨'
+    outcome_completed: '완료', outcome_blocked: '막힘', outcome_crashed: '크래시', outcome_timed_out: '시간 초과', outcome_spawn_failed: '실행 실패', outcome_gave_up: '포기', outcome_reclaimed: '회수됨', outcome_running: '실행 중', outcome_scheduled: '예약됨', outcome_released: '반환됨',
+    now: 'Now', tabBoard: 'Board', feed: 'Feed', tabLog: 'Log', more: 'More',
+    liveRuns: 'Live runs', needsAttention: 'Needs attention', queue: 'Queue', completed: 'Completed',
+    noActiveRuns: 'no active runs', lastFinished: 'last finished', pulseOverdue: 'pulse overdue',
+    loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
+    toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee'
   },
   en: {
     subtitle: 'Readable operations board', boardDescription: 'Dedicated WebUI over the same DB the Hermes CLI uses', newBoard: 'New board', refresh: 'Refresh', themeDark: 'Switch dark', themeLight: 'Switch light', quickTitle: 'Type a task title and press Enter',
@@ -41,7 +46,12 @@ export const labels = {
     viewBoard: 'Board', viewList: 'List', viewLog: 'Log', logInDevelopment: 'Work in progress', listEmpty: 'No tasks', listTotal: 'Total', listShowMore: 'Show more', listAssignee: 'Assignee', listUpdated: 'Updated', listSortAsc: 'Ascending', listSortDesc: 'Descending', multiselectAll: 'All', allStatuses: 'All statuses', tenant: 'Tenant', attachments: 'Attachments', attachmentLost: 'file lost', attachmentAdd: 'Attach file', download: 'Download', listSearchPlaceholder: 'Search title, body, ID', listElapsed: 'Elapsed',
     unitSec: 's', unitMin: 'min', unitHour: 'h', pulseRunning: 'running for', pulseHeartbeat: 'pulse', pulseAgo: 'ago', pulseNoHeartbeat: 'no pulse for',
     logRuns: 'Runs', logEventsMode: 'Events', logSinceAll: 'All time', logSinceToday: 'Today', logSince7d: '7 days', logSince30d: '30 days', logSearchPlaceholder: 'Search summary text', logShowHeartbeat: 'Show heartbeats', logAllProfiles: 'All profiles', logAllOutcomes: 'All outcomes', logAllKinds: 'All events', logEmpty: 'No log entries', logShown: 'Shown', logDetails: 'Details', logHideDetails: 'Hide', logOpenTask: 'Open card', logRunning: 'Running',
-    outcome_completed: 'Completed', outcome_blocked: 'Blocked', outcome_crashed: 'Crashed', outcome_timed_out: 'Timed out', outcome_spawn_failed: 'Spawn failed', outcome_gave_up: 'Gave up', outcome_reclaimed: 'Reclaimed', outcome_running: 'Running', outcome_scheduled: 'Scheduled', outcome_released: 'Released'
+    outcome_completed: 'Completed', outcome_blocked: 'Blocked', outcome_crashed: 'Crashed', outcome_timed_out: 'Timed out', outcome_spawn_failed: 'Spawn failed', outcome_gave_up: 'Gave up', outcome_reclaimed: 'Reclaimed', outcome_running: 'Running', outcome_scheduled: 'Scheduled', outcome_released: 'Released',
+    now: 'Now', tabBoard: 'Board', feed: 'Feed', tabLog: 'Log', more: 'More',
+    liveRuns: 'Live runs', needsAttention: 'Needs attention', queue: 'Queue', completed: 'Completed',
+    noActiveRuns: 'no active runs', lastFinished: 'last finished', pulseOverdue: 'pulse overdue',
+    loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
+    toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee'
   },
   ru: {
     subtitle: 'Доска исполнения задач', boardDescription: 'Отдельный интерфейс к той же базе, что и Hermes CLI', newBoard: 'Новая доска', refresh: 'Обновить', themeDark: 'Тёмная тема', themeLight: 'Светлая тема', quickTitle: 'Введите название задачи и нажмите Enter',
@@ -50,7 +60,7 @@ export const labels = {
     bulkCreate: 'Массовое создание', boardName: 'Название доски', description: 'Описание', cancel: 'Отмена', bulkHint: 'По одной задаче в строке.', loading: 'Загрузка…',
     workflow: 'Workflow', workflowCreate: 'Создать AI workflow', workflowDesignerHint: 'Спроектируйте граф задач из промпта и вложений, затем примените его как настоящие карточки.', workflowPrompt: 'Промпт workflow', workflowPromptPlaceholder: 'Опишите цели, результаты, ограничения и желаемое число шагов', workflowPlannerProfile: 'Профиль планировщика', workflowAttachments: 'Вложения', workflowPlan: 'Спроектировать', workflowPlanning: 'AI проектирует черновик workflow…', workflowRevise: 'Исправить', workflowRevisionPlaceholder: 'Опишите изменения шагов, профилей или зависимостей', workflowApply: 'Применить', workflowDraftStatus: 'Статус черновика', workflowDraftEmpty: 'Введите промпт и нажмите «Спроектировать», чтобы увидеть черновик.', workflowNotApplyable: 'Этот черновик пока нельзя применить. Ответьте на вопросы и отправьте правки.', workflowInstance: 'ID экземпляра', workflowStep: 'Текущий шаг', workflowSteps: 'шагов',
     updateAvailable: 'Доступно обновление', updateTitle: 'Обновление KanbanWebUI', updateApply: 'Обновить и перезапустить', updateLater: 'Позже', updateChecking: 'Проверка обновлений…', updateRestarting: 'Применяю обновление… страница перезагрузится после перезапуска сервера.', updateBlocked: 'Автообновление недоступно', updateNoCommits: 'Нет списка коммитов',
-    scheduled: 'Бэклог', triage: 'Разбор', todo: 'Ожидают', ready: 'Готовы', running: 'В работе', blocked: 'Заблокированы', done: 'Готово', archived: 'Архив',
+    scheduled: 'Бэклог', triage: 'Разбор', todo: 'Ожидают', ready: 'На проверке', running: 'В работе', blocked: 'Заблокированы', done: 'Готово', archived: 'Архив',
     title: 'Заголовок', body: 'Текст', noDescription: 'Без описания', priority: 'Приоритет', status: 'Статус', workspace: 'Рабочий каталог', createdBy: 'Создал',
     comments: 'Комментарии', events: 'События', runs: 'Прогоны', monitor: 'Монитор прогона', context: 'Контекст', log: 'Лог', workerLog: 'Лог воркера',
     dependencies: 'Зависимости', parents: 'Родители', children: 'Дети', parent: 'Родитель', child: 'Ребёнок', chooseTask: 'Выберите задачу', none: 'Нет', remove: 'Удалить',
@@ -63,7 +73,12 @@ export const labels = {
     viewBoard: 'Доска', viewList: 'Список', viewLog: 'Лог', logInDevelopment: 'В разработке', listEmpty: 'Задач нет', listTotal: 'Всего', listShowMore: 'Показать ещё', listAssignee: 'Исполнитель', listUpdated: 'Обновлена', listSortAsc: 'По возрастанию', listSortDesc: 'По убыванию', multiselectAll: 'Все', allStatuses: 'Все статусы', tenant: 'Тенант', attachments: 'Вложения', attachmentLost: 'файл потерян', attachmentAdd: 'Приложить файл', download: 'Скачать', listSearchPlaceholder: 'Поиск по названию, тексту, ID', listElapsed: 'Идёт',
     unitSec: 'с', unitMin: 'мин', unitHour: 'ч', pulseRunning: 'идёт', pulseHeartbeat: 'пульс', pulseAgo: 'назад', pulseNoHeartbeat: 'нет пульса',
     logRuns: 'Прогоны', logEventsMode: 'События', logSinceAll: 'За всё время', logSinceToday: 'Сегодня', logSince7d: '7 дней', logSince30d: '30 дней', logSearchPlaceholder: 'Поиск по тексту summary', logShowHeartbeat: 'Показывать heartbeat', logAllProfiles: 'Все профили', logAllOutcomes: 'Все исходы', logAllKinds: 'Все события', logEmpty: 'Записей нет', logShown: 'Показано', logDetails: 'Подробнее', logHideDetails: 'Свернуть', logOpenTask: 'Открыть карточку', logRunning: 'Выполняется',
-    outcome_completed: 'Завершено', outcome_blocked: 'Заблокировано', outcome_crashed: 'Авария', outcome_timed_out: 'Таймаут', outcome_spawn_failed: 'Не запустился', outcome_gave_up: 'Сдался', outcome_reclaimed: 'Перехвачен', outcome_running: 'Выполняется', outcome_scheduled: 'Запланирован', outcome_released: 'Возвращён'
+    outcome_completed: 'Завершено', outcome_blocked: 'Заблокировано', outcome_crashed: 'Авария', outcome_timed_out: 'Таймаут', outcome_spawn_failed: 'Не запустился', outcome_gave_up: 'Сдался', outcome_reclaimed: 'Перехвачен', outcome_running: 'Выполняется', outcome_scheduled: 'Запланирован', outcome_released: 'Возвращён',
+    now: 'Сейчас', tabBoard: 'Доска', feed: 'Лента', tabLog: 'Лог', more: 'Ещё',
+    liveRuns: 'Живые прогоны', needsAttention: 'Требует внимания', queue: 'Очередь', completed: 'Завершено',
+    noActiveRuns: 'нет активных прогонов', lastFinished: 'последний завершился', pulseOverdue: 'пульс просрочен',
+    loadFailed: 'не удалось загрузить', retry: 'Повторить', modeSections: 'Секции', modeTable: 'Таблица',
+    toActive: 'К активной', showAll: 'Показать все', noAssigneeTasks: 'Без исполнителя'
   }
 };
 

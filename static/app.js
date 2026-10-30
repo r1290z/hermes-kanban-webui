@@ -1,45 +1,76 @@
-import { api } from './api.js?v=20261029-15';
-import { applyI18n, lang, setLang, nextLang, t } from './i18n.js?v=20261029-15';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261029-15';
-import { renderBoard, renderKpis } from './board.js?v=20261029-15';
-import { setupDependencyControls } from './dependency-lines.js?v=20261029-15';
-import { setupForms } from './forms.js?v=20261029-15';
-import { setupMobileFallback } from './mobile.js?v=20261029-15';
-import { setupAppUpdatePrompt } from './update.js?v=20261029-15';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261029-15';
-import { closeDrawer } from './drawer.js?v=20261029-15';
-import { state, setBoard, toast } from './state.js?v=20261029-15';
-import { createMultiSelect, loadList, setupListView } from './list.js?v=20261029-15';
-import { loadLog, setupLogView } from './log.js?v=20261029-15';
-import { schedulePulse } from './pulse.js?v=20261029-15';
+import { api } from './api.js?v=20261030-1';
+import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-1';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-1';
+import { renderBoard } from './board.js?v=20261030-1';
+import { setupDependencyControls } from './dependency-lines.js?v=20261030-1';
+import { setupForms } from './forms.js?v=20261030-1';
+import { setupMobileFallback } from './mobile.js?v=20261030-1';
+import { setupAppUpdatePrompt } from './update.js?v=20261030-1';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-1';
+import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-1';
+import { state, setBoard, toast } from './state.js?v=20261030-1';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-1';
+import { loadLog, setupLogView } from './log.js?v=20261030-1';
+import { schedulePulse } from './pulse.js?v=20261030-1';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
 
-const VIEWS = ['board', 'list', 'log'];
+// Пять экранов, четыре вкладки: вид «Список» живёт внутри вкладки «Доска».
+export const VIEWS = ['now', 'board', 'list', 'feed', 'log'];
+export const TABS = ['now', 'board', 'feed', 'log'];
+const PHONE_QUERY = '(max-width: 759px)';
 
-function currentView() {
-  const raw = (location.hash || '').replace(/^#/, '').trim();
-  const [key, value] = raw.split('=');
-  const view = key === 'view' ? value : raw;
-  return VIEWS.includes(view) ? view : 'board';
+function sectionFor(view) {
+  return document.getElementById(`view${view[0].toUpperCase()}${view.slice(1)}`);
 }
 
-function applyView(view, { updateHash = true } = {}) {
-  const active = VIEWS.includes(view) ? view : 'board';
+// Хэш — набор пар (view=..., task=...): роутер не теряет карточку при смене вью.
+function parseHash() {
+  const pairs = {};
+  for (const part of (location.hash || '').replace(/^#/, '').split('&')) {
+    if (!part) continue;
+    const idx = part.indexOf('=');
+    const key = idx === -1 ? part : part.slice(0, idx);
+    const value = idx === -1 ? '' : part.slice(idx + 1);
+    try { pairs[decodeURIComponent(key)] = decodeURIComponent(value); }
+    catch { pairs[key] = value; }
+  }
+  return pairs;
+}
+
+export function isPhone() { return window.matchMedia(PHONE_QUERY).matches; }
+export function defaultView() { return isPhone() ? 'now' : 'board'; }
+export function currentView() {
+  const view = parseHash().view;
+  return VIEWS.includes(view) ? view : defaultView();
+}
+export function currentTask() { return parseHash().task || null; }
+export function viewUrl(view = currentView(), task = currentTask()) {
+  const parts = [`view=${view}`];
+  if (task) parts.push(`task=${task}`);
+  return `#${parts.join('&')}`;
+}
+
+function writeHash(url) {
+  if (location.hash !== url) history.replaceState(null, '', url);
+}
+
+export function applyView(view, { updateHash = true } = {}) {
+  const active = VIEWS.includes(view) ? view : defaultView();
   VIEWS.forEach(name => {
-    const section = document.getElementById(`view${name[0].toUpperCase()}${name.slice(1)}`);
+    const section = sectionFor(name);
     if (section) section.hidden = name !== active;
   });
-  document.querySelectorAll('#viewSwitch [data-view]').forEach(btn => {
-    btn.classList.toggle('is-active', btn.dataset.view === active);
-    btn.setAttribute('aria-selected', String(btn.dataset.view === active));
+  const tabFor = active === 'list' ? 'board' : active;
+  document.querySelectorAll('.tabs [data-tab]').forEach(btn => {
+    const on = btn.dataset.tab === tabFor;
+    btn.classList.toggle('is-active', on);
+    btn.setAttribute('aria-selected', String(on));
   });
-  if (updateHash && currentView() !== active) {
-    history.replaceState(null, '', `#view=${active}`);
-  }
-  // The pulse poller serves one id list at a time; the list view narrows it to
-  // its filtered rows, so returning to the board re-schedules the full set.
+  if (updateHash) writeHash(viewUrl(active));
+  // Пульс обслуживает один список id за раз: вид «Список» сужает его до своих строк,
+  // поэтому возврат на доску пересобирает полный набор.
   if (active === 'board' && state.data) {
     const runningIds = [];
     (state.data.column_order || []).forEach(status => {
@@ -52,16 +83,43 @@ function applyView(view, { updateHash = true } = {}) {
   return active;
 }
 
-function setupViewSwitch() {
-  document.getElementById('viewSwitch')?.addEventListener('click', ev => {
-    const btn = ev.target.closest('[data-view]');
+function setupTabs() {
+  document.querySelector('.tabs')?.addEventListener('click', ev => {
+    const btn = ev.target.closest('[data-tab]');
     if (!btn) return;
-    const view = btn.dataset.view;
-    history.replaceState(null, '', `#view=${view}`);
+    const view = btn.dataset.tab;
+    writeHash(viewUrl(view));
     applyView(view, { updateHash: false });
   });
-  window.addEventListener('hashchange', () => applyView(currentView(), { updateHash: false }));
+  window.addEventListener('hashchange', () => {
+    applyView(currentView(), { updateHash: false });
+    const task = currentTask();
+    if (task) openTaskDrawer(task);
+    else if (document.getElementById('drawer')?.classList.contains('open')) closeDrawer();
+  });
   applyView(currentView(), { updateHash: false });
+  const task = currentTask();
+  if (task) openTaskDrawer(task);
+}
+
+function setupMorePanel() {
+  const panel = document.getElementById('morePanel');
+  const moreBtn = document.getElementById('moreBtn');
+  const searchBtn = document.getElementById('searchBtn');
+  if (!panel) return;
+  const setOpen = open => {
+    panel.hidden = !open;
+    moreBtn?.setAttribute('aria-expanded', String(open));
+    searchBtn?.setAttribute('aria-expanded', String(open));
+  };
+  moreBtn?.addEventListener('click', () => setOpen(panel.hidden));
+  searchBtn?.addEventListener('click', () => {
+    setOpen(true);
+    document.getElementById('searchInput')?.focus();
+  });
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && !panel.hidden) setOpen(false);
+  });
 }
 
 function setupBoardStatusFilter() {
@@ -89,24 +147,16 @@ function renderBoardColumns() {
 async function loadBoards() {
   const data = await api.boards();
   const select = document.getElementById('boardSelect');
+  if (!select) return;
   select.replaceChildren();
   for (const b of data.boards) {
     const option = document.createElement('option');
     option.value = b.slug;
-    option.textContent = `${b.icon || ''} ${b.name || b.slug} (${b.total || 0})`;
+    option.textContent = `${b.name || b.slug} (${b.total || 0})`;
     select.appendChild(option);
   }
   if (!data.boards.find(b => b.slug === state.board)) setBoard(data.current || 'default');
   select.value = state.board;
-}
-
-async function loadStatus() {
-  const status = await api.status();
-  document.getElementById('healthDot').classList.toggle('ok', status.ok);
-  document.getElementById('healthText').textContent = status.ok ? 'OK' : 'Error';
-  document.getElementById('dbPath').textContent = status.db_path || '';
-  const serverLabel = document.getElementById('serverLabel');
-  if (serverLabel) serverLabel.textContent = `${status.service || 'kanban-webui'} · ${window.location.host}`;
 }
 
 function countAssigneeTasks(assignee) {
@@ -131,13 +181,16 @@ function renderAssigneeControls(data) {
   const profileAssignees = assignees.filter(item => item && item.on_disk);
 
   const taskAssignee = document.getElementById('taskAssignee');
-  const previousTaskAssignee = taskAssignee.value || localStorage.getItem('lastAssignee') || '';
-  taskAssignee.replaceChildren();
-  appendOption(taskAssignee, '', t('unassigned'));
-  for (const assignee of profileAssignees) appendOption(taskAssignee, assignee.name, assigneeOptionLabel(assignee));
-  taskAssignee.value = profileAssignees.some(item => item.name === previousTaskAssignee) ? previousTaskAssignee : '';
+  if (taskAssignee) {
+    const previousTaskAssignee = taskAssignee.value || localStorage.getItem('lastAssignee') || '';
+    taskAssignee.replaceChildren();
+    appendOption(taskAssignee, '', t('unassigned'));
+    for (const assignee of profileAssignees) appendOption(taskAssignee, assignee.name, assigneeOptionLabel(assignee));
+    taskAssignee.value = profileAssignees.some(item => item.name === previousTaskAssignee) ? previousTaskAssignee : '';
+  }
 
   const filter = document.getElementById('assigneeFilter');
+  if (!filter) return;
   const previousFilter = state.assignee || filter.value || '';
   filter.replaceChildren();
   appendOption(filter, '', t('allAssignees'));
@@ -163,44 +216,40 @@ export async function load() {
   state.data = data;
   state.latestEventId = data.latest_event_id;
   renderAssigneeControls(data);
-  document.getElementById('boardTitle').textContent = data.board_meta.name || data.board;
-  document.getElementById('boardDescription').textContent = data.board_meta.description || t('boardDescription');
-  renderKpis(data);
+  const boardName = document.getElementById('boardName');
+  if (boardName) boardName.textContent = (data.board_meta || {}).name || data.board;
   renderBoardColumns();
   if (boardStatusSelect) {
     boardStatusSelect.setOptions((data.column_order || []).map(status => ({ value: status, label: t(status) })));
   }
   await refreshOperationsPanel();
-  await loadStatus();
   if (currentView() === 'list') loadList();
   if (currentView() === 'log') loadLog();
 }
 
 function setupControls() {
-  document.getElementById('refreshBtn').addEventListener('click', load);
-  const toolbarToggle = document.getElementById('toolbarToggle');
-  if (toolbarToggle) {
-    toolbarToggle.addEventListener('click', () => {
-      const open = toolbarToggle.closest('.toolbar').classList.toggle('is-open');
-      toolbarToggle.setAttribute('aria-expanded', String(open));
-    });
-  }
-  document.getElementById('langToggle').addEventListener('click', () => { setLang(nextLang()); updateThemeToggleLabel(); load(); });
-  document.getElementById('boardSelect').addEventListener('change', async ev => {
+  const on = (id, event, handler) => document.getElementById(id)?.addEventListener(event, handler);
+  on('refreshBtn', 'click', load);
+  on('langToggle', 'click', () => { setLang(nextLang()); updateThemeToggleLabel(); load(); });
+  on('boardSelect', 'change', async ev => {
     setBoard(ev.target.value);
     await api.switchBoard(state.board);
     await load();
   });
-  document.getElementById('archivedToggle').addEventListener('change', ev => { state.includeArchived = ev.target.checked; load(); });
-  document.getElementById('searchInput').addEventListener('input', ev => { state.query = ev.target.value; clearTimeout(ev.target._timer); ev.target._timer = setTimeout(load, 250); });
-  document.getElementById('assigneeFilter').addEventListener('change', ev => { state.assignee = ev.target.value; load(); });
-  document.getElementById('overlay').addEventListener('click', closeDrawer);
+  on('archivedToggle', 'change', ev => { state.includeArchived = ev.target.checked; load(); });
+  on('searchInput', 'input', ev => { state.query = ev.target.value; clearTimeout(ev.target._timer); ev.target._timer = setTimeout(load, 250); });
+  on('assigneeFilter', 'change', ev => { state.assignee = ev.target.value; load(); });
+  on('overlay', 'click', closeDrawer);
   document.addEventListener('kanban:refresh', load);
   document.addEventListener('keydown', ev => {
     if (ev.key === 'Escape') closeDrawer();
     const tagName = ev.target?.tagName?.toLowerCase();
     const isTyping = ['input', 'select', 'textarea'].includes(tagName) || ev.target?.isContentEditable;
-    if (!isTyping && ev.key === '/') { ev.preventDefault(); document.getElementById('searchInput').focus(); }
+    if (!isTyping && ev.key === '/') {
+      ev.preventDefault();
+      document.getElementById('moreBtn')?.click();
+      document.getElementById('searchInput')?.focus();
+    }
     if (!isTyping && ev.key.toLowerCase() === 'n') document.getElementById('taskCreateBtn').click();
   });
 }
@@ -220,7 +269,8 @@ async function main() {
   applyI18n();
   setupThemeToggle();
   setupControls();
-  setupViewSwitch();
+  setupMorePanel();
+  setupTabs();
   setupBoardStatusFilter();
   setupListView();
   setupLogView();

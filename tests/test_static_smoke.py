@@ -17,6 +17,18 @@ def asset_version() -> str:
     return match.group(1)
 
 
+def css_rule(style: str, selector: str) -> str:
+    """Body of one CSS rule, matched by its exact selector (no substring surprises)."""
+    match = re.search(re.escape(selector) + r'\s*\{([^}]*)\}', style)
+    assert match, f'правило {selector} не найдено в style.css'
+    return match.group(1)
+
+
+SPEC_TOKENS = ['--bg', '--surface', '--surface-2', '--line', '--line-strong', '--ink', '--mut',
+               '--faint', '--run', '--blk', '--ok', '--danger', '--on-accent', '--r-sm', '--r-md',
+               '--shadow-overlay']
+
+
 def test_static_shell_contains_required_ui_contracts(client):
     index = client.get('/').text
     assert 'Hermes KanbanWebUI' in index
@@ -103,11 +115,11 @@ def test_dark_mode_static_contract():
     assert 'localStorage.setItem(THEME_STORAGE_KEY' in theme
     assert 'themeDark' in i18n
     assert 'themeLight' in i18n
-    assert ':root[data-theme="dark"]' in tokens
+    assert ':root[data-theme="light"]' in tokens
     assert 'color-scheme: dark' in tokens
-    for token in ['--body-background', '--control-bg', '--card-bg', '--column-header-bg', '--edge-stroke']:
-        assert token in tokens
-        assert f'var({token})' in style
+    for token in SPEC_TOKENS:
+        assert f'{token}:' in tokens, f'{token} объявлен в design-tokens.css'
+        assert f'var({token})' in style, f'{token} используется в style.css'
 
 
 def test_dragdrop_pointer_contract_strings():
@@ -144,9 +156,13 @@ def test_button_hover_keeps_ghost_text_readable():
     root = Path(__file__).resolve().parents[1]
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
 
+    # контракт: наведение не перекрашивает текст кнопки в цвет её же заливки
     assert '.button.primary, .button:hover' not in style
-    assert '.button.ghost { background: var(--ghost-bg); color: var(--ink); }' in style
-    assert '.button.ghost:hover { background: var(--ghost-hover-bg); color: var(--ink); border-color: var(--border); }' in style
+    ghost = css_rule(style, '.button.ghost')
+    ghost_hover = css_rule(style, '.button.ghost:hover')
+    assert re.search(r'color:\s*var\(--(ink|mut)\)', ghost), 'база ghost-кнопки читаема'
+    assert 'background: var(--surface-2)' in ghost_hover
+    assert 'color: var(--ink)' in ghost_hover
     assert '.button.ghost.danger-btn:hover' in style
 
 
@@ -156,7 +172,7 @@ def test_drawer_forms_do_not_overflow_grid_tracks():
 
     assert 'grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(96px, .4fr) auto' in style
     assert 'minmax(220px, 1fr)' not in style
-    assert '.inline-form label, .dependency-form { display: grid; gap: 6px; color: var(--muted); font-weight: 700; min-width: 0; }' in style
+    assert '.inline-form label, .dependency-form { display: grid; gap: 6px; color: var(--mut); font-weight: 600; min-width: 0; }' in style
     assert '.inline-form input, .inline-form select, .dependency-form select, .dependency-form button { width: 100%; min-width: 0; }' in style
     assert '.dependency-grid > div { min-width: 0; }' in style
 
@@ -241,10 +257,12 @@ def test_unassigned_tasks_are_visually_flagged():
         assert key in i18n
     for css_class in ['.task-card.is-unassigned', '.profile-missing-badge', '.chips .missing-assignee-chip']:
         assert css_class in style
+    # контракт: нераспределённая карточка помечена акцентом --blk, а не украшением
+    for selector in ['.task-card.is-unassigned', '.profile-missing-badge', '.chips .missing-assignee-chip']:
+        assert 'var(--blk)' in css_rule(style, selector), selector
     assert f'./board.js?v={asset_version()}' in app
     assert f'./i18n.js?v={asset_version()}' in board
-    for token in ['--warning-soft', '--warning-ring']:
-        assert token in tokens
+    assert '--blk:' in tokens
 
 
 def test_operations_dashboard_static_contract():
@@ -319,30 +337,30 @@ def test_board_columns_fill_available_resolution_width():
     root = Path(__file__).resolve().parents[1]
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
     board = (root / 'static' / 'board.js').read_text(encoding='utf-8')
-    tokens = (root / 'static' / 'design-tokens.css').read_text(encoding='utf-8')
 
-    assert '--column-min-width:' in tokens
     assert '--kanban-column-count' in board
     assert "root.style.setProperty('--kanban-column-count'" in board
-    assert '.board { position: relative; display: grid;' in style
-    assert 'grid-template-columns: repeat(var(--kanban-column-count, 6), minmax(var(--column-min-width), 1fr));' in style
+    board_rule = css_rule(style, '.board')
+    assert 'display: grid' in board_rule
+    assert 'var(--kanban-column-count' in board_rule
+    # ширина колонки не фиксируется — иначе появляется горизонтальное переполнение
     assert 'width: var(--column-width)' not in style
     assert 'min-width: var(--column-width)' not in style
-    assert '.board-column { position: relative; min-width: 0;' in style
+    column_rule = css_rule(style, '.board-column')
+    assert 'position: relative' in column_rule
+    assert 'min-width: 0' in column_rule
 
 
-def test_kpi_row_uses_dynamic_status_count_when_archived_is_visible():
+def test_kpi_row_and_hero_card_removed_from_shell():
+    """KPI-полоса и hero-card убраны: их роль забрал экран «Сейчас»."""
     root = Path(__file__).resolve().parents[1]
+    index = (root / 'static' / 'index.html').read_text(encoding='utf-8')
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
-    board = (root / 'static' / 'board.js').read_text(encoding='utf-8')
-    render_kpis = board.split('export function renderKpis(data) {', 1)[1].split('export function renderBoard(data) {', 1)[0]
 
-    assert '--kpi-column-count' in render_kpis
-    assert "root.style.setProperty('--kpi-column-count'" in render_kpis
-    assert 'grid-template-columns: repeat(var(--kpi-column-count, 6), minmax(120px, 1fr));' in style
-    assert 'overflow-x: auto;' in style
-    assert '.kpi-row { grid-template-columns: repeat(3, 1fr); }' not in style
-    assert '.kpi-row { grid-template-columns: repeat(2, 1fr); }' not in style
+    assert 'kpiRow' not in index
+    assert 'hero-card' not in index
+    assert 'kpi-row' not in style
+    assert 'kpi-column-count' not in style
 
 
 def test_dependency_lines_render_above_column_backgrounds_below_cards():

@@ -1,4 +1,4 @@
-import { t } from './i18n.js?v=20261029-15';
+import { t } from './i18n.js?v=20261030-1';
 
 export const THEME_STORAGE_KEY = 'kanbanTheme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
@@ -30,7 +30,7 @@ export function updateThemeToggleLabel(theme = resolveTheme()) {
   const toggle = document.getElementById('themeToggle');
   if (!toggle) return;
   const nextIsDark = theme !== 'dark';
-  toggle.textContent = nextIsDark ? `🌙 ${t('themeDark')}` : `☀️ ${t('themeLight')}`;
+  toggle.textContent = nextIsDark ? t('themeDark') : t('themeLight');
   toggle.setAttribute('aria-label', nextIsDark ? t('themeDark') : t('themeLight'));
   toggle.setAttribute('aria-pressed', String(theme === 'dark'));
 }

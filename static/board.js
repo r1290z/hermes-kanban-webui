@@ -1,9 +1,9 @@
-import { t } from './i18n.js?v=20261029-15';
-import { escapeHtml } from './markdown.js?v=20261029-15';
-import { openTaskDrawer } from './drawer.js?v=20261029-15';
-import { attachDragHandlers } from './dragdrop.js?v=20261029-15';
-import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261029-15';
-import { schedulePulse } from './pulse.js?v=20261029-15';
+import { t } from './i18n.js?v=20261030-1';
+import { escapeHtml } from './markdown.js?v=20261030-1';
+import { openTaskDrawer } from './drawer.js?v=20261030-1';
+import { attachDragHandlers } from './dragdrop.js?v=20261030-1';
+import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261030-1';
+import { schedulePulse } from './pulse.js?v=20261030-1';
 
 function card(task) {
   const isUnassigned = !task.assignee;

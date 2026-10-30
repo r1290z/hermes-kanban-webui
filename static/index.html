@@ -1,81 +1,74 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
   <title>Hermes KanbanWebUI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261029-15" />
-  <link rel="stylesheet" href="/static/style.css?v=20261029-15" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-1" />
+  <link rel="stylesheet" href="/static/style.css?v=20261030-1" />
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">H</div>
-        <div>
-          <h1>Hermes Kanban</h1>
-          <p data-i18n="subtitle">Доска исполнения задач</p>
-        </div>
+        <b>Hermes Kanban</b>
+        <span class="board-name" id="boardName">Default</span>
       </div>
-      <nav class="view-switch" id="viewSwitch" role="tablist" aria-label="views">
-        <button class="button ghost is-active" type="button" role="tab" data-view="board" data-i18n="viewBoard">Доска</button>
-        <button class="button ghost" type="button" role="tab" data-view="list" data-i18n="viewList">Список</button>
-        <button class="button ghost" type="button" role="tab" data-view="log" data-i18n="viewLog">Лог</button>
+      <nav class="tabs" role="tablist" aria-label="views">
+        <button type="button" role="tab" data-tab="now" data-i18n="now" aria-selected="false">Сейчас</button>
+        <button type="button" role="tab" data-tab="board" data-i18n="tabBoard" aria-selected="true">Доска</button>
+        <button type="button" role="tab" data-tab="feed" data-i18n="feed" aria-selected="false">Лента</button>
+        <button type="button" role="tab" data-tab="log" data-i18n="tabLog" aria-selected="false">Лог</button>
       </nav>
       <div class="top-actions">
-        <select id="boardSelect" aria-label="board"></select>
-        <button class="button ghost" id="newBoardBtn" data-i18n="newBoard">Новая доска</button>
-        <button class="button ghost" id="refreshBtn" data-i18n="refresh">Обновить</button>
-        <button class="button ghost theme-toggle" id="themeToggle" type="button" aria-pressed="false">🌙 Тёмная</button>
-        <button class="button" id="langToggle">EN</button>
+        <button class="icon-btn" id="searchBtn" type="button" aria-label="Поиск" aria-controls="morePanel" aria-expanded="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.6 10.6 14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <button class="icon-btn" id="moreBtn" type="button" aria-label="Ещё" aria-controls="morePanel" aria-expanded="false">&#8943;</button>
+        <button class="button primary" id="taskCreateBtn" type="button" data-i18n="taskCreate">Создать задачу</button>
       </div>
     </header>
 
+    <section class="more-panel" id="morePanel" hidden aria-label="more controls">
+      <div class="more-row">
+        <select id="boardSelect" aria-label="board"></select>
+        <button class="button ghost" id="refreshBtn" type="button" data-i18n="refresh">Обновить</button>
+        <button class="button ghost" id="newBoardBtn" type="button" data-i18n="newBoard">Новая доска</button>
+        <button class="button ghost" id="themeToggle" type="button" aria-pressed="false">Тёмная тема</button>
+        <button class="button ghost" id="langToggle" type="button">EN</button>
+      </div>
+      <div class="more-row">
+        <button class="button ghost" id="opsToggleBtn" type="button" data-i18n="operations" aria-expanded="false">Operations</button>
+        <button class="button ghost" id="workflowBtn" type="button" data-i18n="workflowCreate">Создать AI workflow</button>
+        <button class="button ghost" id="bulkBtn" type="button" data-i18n="bulkCreate">Массовое создание</button>
+      </div>
+      <div class="more-row">
+        <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
+        <div id="statusFilter" class="multiselect-host"></div>
+        <select id="assigneeFilter"><option value="" data-i18n="allAssignees">Все исполнители</option></select>
+        <select id="dependencyView" aria-label="dependency view">
+          <option value="focus" data-i18n="dependencyViewFocus">Связи: от выбранной</option>
+          <option value="all" data-i18n="dependencyViewAll">Связи: все</option>
+          <option value="blocked" data-i18n="dependencyViewBlocked">Связи: блокировки</option>
+          <option value="off" data-i18n="dependencyViewOff">Связи: скрыты</option>
+        </select>
+        <label class="check"><input id="archivedToggle" type="checkbox" /> <span data-i18n="showArchived">Показывать архив</span></label>
+      </div>
+    </section>
+
     <main>
+      <section id="viewNow" class="view" data-view="now">
+        <p class="view-placeholder" data-i18n="loading">Загрузка…</p>
+      </section>
+
       <section id="viewBoard" class="view" data-view="board">
-      <section class="hero-card">
-        <div>
-          <p id="serverLabel" class="eyebrow">KanbanWebUI</p>
-          <h2 id="boardTitle">Default</h2>
-          <p id="boardDescription" class="muted">Отдельный интерфейс к той же базе, что и Hermes CLI</p>
-        </div>
-        <div class="health-panel">
-          <span id="healthDot" class="dot"></span>
-          <div>
-            <strong id="healthText">loading</strong>
-            <small id="dbPath"></small>
-          </div>
-        </div>
+        <section id="opsPanel" class="ops-panel" aria-label="operations" hidden></section>
+        <section id="board" class="board" aria-label="kanban board"></section>
       </section>
 
-      <section class="toolbar" aria-label="filters">
-        <button class="button ghost toolbar-toggle" id="toolbarToggle" type="button" aria-expanded="false" data-i18n="toolbarToggle">Фильтры и действия</button>
-        <div class="filters">
-          <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
-          <select id="assigneeFilter"><option value="" data-i18n="allAssignees">Все исполнители</option></select>
-          <div id="statusFilter" class="multiselect-host"></div>
-          <select id="dependencyView" aria-label="dependency view">
-            <option value="focus" data-i18n="dependencyViewFocus">Связи: от выбранной</option>
-            <option value="all" data-i18n="dependencyViewAll">Связи: все</option>
-            <option value="blocked" data-i18n="dependencyViewBlocked">Связи: блокировки</option>
-            <option value="off" data-i18n="dependencyViewOff">Связи: скрыты</option>
-          </select>
-          <label class="check"><input id="archivedToggle" type="checkbox" /> <span data-i18n="showArchived">Показывать архив</span></label>
-        </div>
-        <div class="toolbar-actions">
-          <button class="button ghost" id="opsToggleBtn" type="button" data-i18n="operations" aria-expanded="false">Operations</button>
-          <button class="button primary" id="taskCreateBtn" type="button" data-i18n="taskCreate">Создать задачу</button>
-          <button class="button ghost" id="workflowBtn" type="button" data-i18n="workflowCreate">Создать AI workflow</button>
-          <button class="button ghost" id="bulkBtn" type="button" data-i18n="bulkCreate">Массовое создание</button>
-        </div>
-      </section>
-
-      <section id="kpiRow" class="kpi-row" aria-label="board stats"></section>
-      <section id="opsPanel" class="ops-panel" aria-label="operations" hidden></section>
-      <section id="board" class="board" aria-label="kanban board"></section>
+      <section id="viewFeed" class="view" data-view="feed" hidden>
+        <p class="view-placeholder" data-i18n="loading">Загрузка…</p>
       </section>
 
       <section id="viewList" class="view" data-view="list" hidden>
@@ -238,6 +231,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261029-15"></script>
+  <script type="module" src="/static/app.js?v=20261030-1"></script>
 </body>
 </html>

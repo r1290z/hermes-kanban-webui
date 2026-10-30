@@ -3,10 +3,10 @@
 // Clock discipline: the server's `now` from each response is the base; between
 // polls we interpolate with Date.now() only as a drift offset, so a browser
 // with a wrong clock or timezone can never produce a negative elapsed time.
-import { api } from './api.js?v=20261030-2';
-import { t } from './i18n.js?v=20261030-2';
-import { state } from './state.js?v=20261030-2';
-import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-2';
+import { api } from './api.js?v=20261030-3';
+import { t } from './i18n.js?v=20261030-3';
+import { state } from './state.js?v=20261030-3';
+import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-3';
 
 const POLL_MS = 10000;
 
@@ -80,6 +80,20 @@ function apply() {
       : `${t('pulseHeartbeat')} ${formatDuration(Math.max(0, Number(entry.heartbeat_age_sec) || 0))}`;
     el.classList.toggle('is-overdue', Boolean(entry.overdue));
     if (el.textContent !== text) el.textContent = text;
+  });
+  // Полоса прогресса карточки: рисуется только у прогонов с max_runtime_seconds,
+  // доля = прошло / лимит; просроченный прогон помечается is-overdue.
+  document.querySelectorAll('[data-pulse-progress]').forEach(el => {
+    const entry = pulse[el.dataset.pulseProgress];
+    if (!entry) return;
+    const limit = Number(el.dataset.pulseLimit) || 0;
+    if (!(limit > 0)) return;
+    const elapsed = elapsedSeconds(entry);
+    const percent = Math.max(0, Math.min(100, (elapsed / limit) * 100));
+    const bar = el.firstElementChild;
+    if (bar) bar.style.width = `${percent.toFixed(1)}%`;
+    el.classList.toggle('is-overdue', Boolean(entry.overdue));
+    el.setAttribute('aria-valuenow', String(Math.round(elapsed)));
   });
 }
 

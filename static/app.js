@@ -1,18 +1,18 @@
-import { api } from './api.js?v=20261030-2';
-import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-2';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-2';
-import { renderBoard } from './board.js?v=20261030-2';
-import { setupDependencyControls } from './dependency-lines.js?v=20261030-2';
-import { setupForms } from './forms.js?v=20261030-2';
-import { setupMobileFallback } from './mobile.js?v=20261030-2';
-import { setupAppUpdatePrompt } from './update.js?v=20261030-2';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-2';
-import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-2';
-import { state, setBoard, toast } from './state.js?v=20261030-2';
-import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-2';
-import { loadLog, setupLogView } from './log.js?v=20261030-2';
-import { schedulePulse } from './pulse.js?v=20261030-2';
-import { loadNow } from './now.js?v=20261030-2';
+import { api } from './api.js?v=20261030-3';
+import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-3';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-3';
+import { renderBoard } from './board.js?v=20261030-3';
+import { setupDependencyControls } from './dependency-lines.js?v=20261030-3';
+import { setupForms } from './forms.js?v=20261030-3';
+import { setupMobileFallback } from './mobile.js?v=20261030-3';
+import { setupAppUpdatePrompt } from './update.js?v=20261030-3';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-3';
+import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-3';
+import { state, setBoard, toast } from './state.js?v=20261030-3';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-3';
+import { loadLog, setupLogView } from './log.js?v=20261030-3';
+import { schedulePulse } from './pulse.js?v=20261030-3';
+import { loadNow } from './now.js?v=20261030-3';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
@@ -59,15 +59,29 @@ function writeHash(url) {
 
 export function applyView(view, { updateHash = true } = {}) {
   const active = VIEWS.includes(view) ? view : defaultView();
+  // «Список» живёт внутри вкладки «Доска» переключателем «Секции | Таблица»:
+  // обе секции видны, переключается только начинка — колонки/секции или таблица.
+  const host = active === 'list' ? 'board' : active;
   VIEWS.forEach(name => {
     const section = sectionFor(name);
-    if (section) section.hidden = name !== active;
+    if (section) section.hidden = name !== active && name !== host;
   });
+  const sections = document.getElementById('boardSections');
+  if (sections) sections.hidden = active === 'list';
+  if (active === 'list') {
+    const toActive = document.getElementById('boardToActive');
+    if (toActive) toActive.hidden = true;
+  }
   const tabFor = active === 'list' ? 'board' : active;
   document.querySelectorAll('.tabs [data-tab]').forEach(btn => {
     const on = btn.dataset.tab === tabFor;
     btn.classList.toggle('is-active', on);
     btn.setAttribute('aria-selected', String(on));
+  });
+  document.querySelectorAll('[data-board-mode]').forEach(btn => {
+    const on = btn.dataset.boardMode === (active === 'list' ? 'table' : 'sections');
+    btn.classList.toggle('is-active', on);
+    btn.setAttribute('aria-pressed', String(on));
   });
   if (updateHash) writeHash(viewUrl(active));
   // Пульс обслуживает один список id за раз: вид «Список» сужает его до своих строк,
@@ -124,6 +138,25 @@ function setupMorePanel() {
   document.addEventListener('keydown', ev => {
     if (ev.key === 'Escape' && !panel.hidden) setOpen(false);
   });
+}
+
+// Переключатель «Секции | Таблица» и строка фильтров — внутри вкладки «Доска».
+function setupBoardMode() {
+  const bar = document.getElementById('boardBar');
+  if (!bar) return;
+  bar.addEventListener('click', ev => {
+    const btn = ev.target.closest('[data-board-mode]');
+    if (!btn) return;
+    applyView(btn.dataset.boardMode === 'table' ? 'list' : 'board');
+  });
+  // Фильтры строки принадлежат таблице: в режиме секций их ввод иначе не виден,
+  // поэтому первое же изменение переключает на «Таблицу».
+  const toTable = ev => {
+    if (ev.target.closest?.('.mode-switch')) return;
+    if (currentView() === 'board') applyView('list');
+  };
+  bar.addEventListener('change', toTable);
+  bar.addEventListener('input', toTable);
 }
 
 function setupBoardStatusFilter() {
@@ -276,6 +309,7 @@ async function main() {
   setupControls();
   setupMorePanel();
   setupTabs();
+  setupBoardMode();
   setupBoardStatusFilter();
   setupListView();
   setupLogView();

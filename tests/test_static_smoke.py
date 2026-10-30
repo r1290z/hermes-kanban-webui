@@ -247,7 +247,6 @@ def test_unassigned_tasks_are_visually_flagged():
         'const isUnassigned = !task.assignee;',
         'profileMissing',
         'profileMissingShort',
-        'missing-assignee-chip',
         'profile-missing-badge',
         "data-assignee-state=\"${isUnassigned ? 'missing' : 'assigned'}\"",
         "task.status}${isUnassigned ? ' is-unassigned' : ''}",
@@ -333,7 +332,9 @@ def test_workflow_static_contract():
         assert css_class in style
 
 
-def test_board_columns_fill_available_resolution_width():
+def test_board_columns_are_fixed_width_with_horizontal_scroll():
+    """≥760px колонки фиксированные 320px и доска листается вбок (спека §4.2);
+    пустой статус сжимается в рейл 40px, чтобы не занимать ширину."""
     root = Path(__file__).resolve().parents[1]
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
     board = (root / 'static' / 'board.js').read_text(encoding='utf-8')
@@ -343,12 +344,15 @@ def test_board_columns_fill_available_resolution_width():
     board_rule = css_rule(style, '.board')
     assert 'display: grid' in board_rule
     assert 'var(--kanban-column-count' in board_rule
-    # ширина колонки не фиксируется — иначе появляется горизонтальное переполнение
+    assert 'overflow-x: auto' in board_rule
+    # переменной ширины колонки нет — иначе ширина зависит от числа колонок
     assert 'width: var(--column-width)' not in style
     assert 'min-width: var(--column-width)' not in style
     column_rule = css_rule(style, '.board-column')
     assert 'position: relative' in column_rule
     assert 'min-width: 0' in column_rule
+    assert 'width: 320px' in column_rule
+    assert 'width: 40px' in css_rule(style, '.board-column.is-empty')
 
 
 def test_kpi_row_and_hero_card_removed_from_shell():

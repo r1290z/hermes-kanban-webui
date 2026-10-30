@@ -135,18 +135,39 @@ label { color: var(--mut); font-size: 12.5px; }
 .toolbar-actions { justify-content: flex-end; }
 .toolbar-toggle, .log-filters-toggle { display: none; }
 
-/* ===== Доска ===== */
-.board { position: relative; display: grid; grid-template-columns: repeat(var(--kanban-column-count, 6), minmax(0, 1fr)); gap: 10px; overflow-x: auto; min-height: calc(100vh - 220px); padding-bottom: 12px; scroll-snap-type: x proximity; align-items: start; }
-.board-column { position: relative; min-width: 0; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); padding: 8px; align-self: stretch; scroll-snap-align: start; }
+/* ===== Доска =====
+   Один DOM — две раскладки: ≥760px колонки по 320px с горизонтальным скроллом,
+   <760px — вертикальные секции со sticky-заголовками (медиа-блок ниже). */
+.board-sections { position: relative; min-width: 0; }
+/* Тень у правого края — подсказка, что доска листается вбок (только если есть куда). */
+.board-sections::after { content: ''; position: absolute; top: 0; right: 0; bottom: 12px; width: 24px; opacity: 0; pointer-events: none; transition: opacity .16s ease; box-shadow: inset -14px 0 16px -10px rgba(0, 0, 0, .7); }
+.board-sections:has(.board.can-scroll-right)::after { opacity: 1; }
+.board { position: relative; display: grid; grid-template-columns: repeat(var(--kanban-column-count, 1), max-content); grid-auto-flow: column; gap: 12px; align-items: start; overflow-x: auto; overflow-y: auto; overscroll-behavior-x: contain; min-height: calc(100vh - 260px); max-height: calc(100vh - 200px); padding-bottom: 12px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.board-column { position: relative; min-width: 0; width: 320px; max-width: 320px; align-self: stretch; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); padding: 8px; scroll-snap-align: start; }
 .board-column header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px 8px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .board-column header div { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
 .board-column header h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .board-column header small { color: var(--faint); font-size: 11.5px; }
 .mini-add, .icon-button { appearance: none; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: transparent; color: var(--mut); width: 26px; height: 26px; line-height: 1; cursor: pointer; flex: none; }
 .mini-add:hover, .icon-button:hover { background: var(--surface-2); color: var(--ink); }
+/* Пустой статус не занимает колонку: узкий рейл с вертикальной подписью. */
+.board-column.is-empty { width: 40px; max-width: 40px; padding: 8px 4px; }
+.board-column.is-empty .cards, .board-column.is-empty .drop-placeholder { display: none; }
+.board-column.is-empty header { flex-direction: column; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 0; }
+.board-column.is-empty header div { flex-direction: column; align-items: center; gap: 4px; }
+.board-column.is-empty header h2 { writing-mode: vertical-rl; text-orientation: mixed; letter-spacing: .1em; }
+.board-column.is-empty .mini-add { width: 24px; height: 24px; }
 .cards { position: relative; z-index: 2; display: grid; gap: 8px; min-width: 0; padding-top: 8px; }
 .empty { border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: 18px; color: var(--faint); text-align: center; }
 .drop-target { outline: 2px solid var(--run); }
+/* Ряд чипов пустых статусов: только на телефоне. */
+.board-rail { display: none; }
+/* Переключатель «Секции | Таблица» — внутри вкладки «Доска». */
+.mode-switch { display: inline-flex; flex: none; border: 1px solid var(--line-strong); border-radius: var(--r-sm); overflow: hidden; }
+.mode-switch button { appearance: none; min-height: 32px; border: 0; background: transparent; color: var(--mut); font-size: 12px; padding: 6px 10px; cursor: pointer; }
+.mode-switch button + button { border-left: 1px solid var(--line-strong); }
+.mode-switch button.is-active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+#boardToActive { flex: none; }
 
 /* ===== Карточка задачи ===== */
 .task-card { position: relative; min-width: 0; overflow-wrap: anywhere; background: var(--surface-2); border: 1px solid var(--line); border-left: 2px solid transparent; border-radius: var(--r-md); padding: 10px; cursor: grab; }
@@ -160,8 +181,23 @@ label { color: var(--mut); font-size: 12.5px; }
 .task-card.is-unassigned { border-color: var(--blk); }
 .card-top, .card-foot, .chips { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .card-top code, .drawer code { font-family: var(--font-mono); color: var(--run); font-size: 12px; overflow-wrap: anywhere; }
-.task-card h3 { font-size: 14px; line-height: 1.3; margin: 8px 0 6px; overflow-wrap: anywhere; }
-.task-card p { color: var(--mut); font-size: 12.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.task-card h3 { font-size: 13.5px; line-height: 1.35; margin: 6px 0 0; overflow-wrap: anywhere; }
+.task-card p { color: var(--mut); font-size: 12px; line-height: 1.4; margin: 4px 0 0; overflow-wrap: anywhere; }
+/* Плотная шапка карточки: id не переносится, метаданные — одной строкой. */
+.card-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.card-head .id { font-family: var(--font-mono); color: var(--run); font-size: 11.5px; white-space: nowrap; }
+.card-head .status-dot { margin-left: auto; flex: none; }
+.card-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; min-width: 0; overflow: hidden; white-space: nowrap; color: var(--mut); font-size: 11.5px; }
+.card-meta > * { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.card-meta .num { color: var(--ink); font-variant-numeric: tabular-nums; }
+.card-meta .chip-profile { color: var(--mut); font-weight: 600; }
+.card-meta .workflow-chip { color: var(--faint); }
+.task-card .card-live { margin: 6px 0 0; }
+.card-progress { display: block; margin-top: 6px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.card-progress > i { display: block; height: 100%; width: 0; background: var(--run); transition: width .4s linear; }
+.card-progress.is-overdue > i { background: var(--blk); }
+.section-more { width: 100%; margin-top: 8px; }
 .chips { justify-content: flex-start; flex-wrap: wrap; margin-top: 8px; min-width: 0; }
 .chips span, .status { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px 7px; background: var(--surface); font-size: 11.5px; color: var(--mut); max-width: 100%; overflow-wrap: anywhere; }
 .chips .missing-assignee-chip { border-color: var(--blk); background: transparent; color: var(--blk); font-weight: 600; }
@@ -190,6 +226,16 @@ label { color: var(--mut); font-size: 12.5px; }
 .dependency-port { position: absolute; top: 50%; z-index: 3; width: 18px; height: 18px; transform: translateY(-50%); display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: crosshair; }
 .dependency-port.child-port { right: -9px; }
 .dependency-port.parent-port { left: -9px; }
+/* Порт не рисуется, пока карточка не в фокусе, и всегда виден в режиме связывания. */
+.task-card > .dependency-port { opacity: 0; pointer-events: none; }
+.task-card:hover > .dependency-port,
+.task-card:focus-within > .dependency-port,
+.task-card.dependency-focus > .dependency-port,
+.board.is-linking .task-card > .dependency-port,
+.board.is-linking .dependency-port.is-link-source,
+.dependency-port.is-link-source,
+.dependency-port.is-link-target,
+.dependency-port:focus-visible { opacity: 1; pointer-events: auto; }
 .dependency-port span { position: absolute; top: -26px; min-width: max-content; opacity: 0; pointer-events: none; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px 7px; background: var(--surface); color: var(--ink); font-size: 11px; font-weight: 600; }
 .task-card:hover .dependency-port span, .dependency-port:focus-visible span, .dependency-port.is-link-source span, .dependency-port.is-link-target span { opacity: 1; }
 .dependency-port:hover, .dependency-port:focus-visible, .dependency-port.is-link-source, .dependency-port.is-link-target { outline: none; border-color: var(--run); }
@@ -528,15 +574,29 @@ td.list-pulse .is-overdue { color: var(--danger); font-weight: 600; }
   .more-panel { padding: 10px; }
   .more-row > select, .more-row > input, .more-row .button { flex: 1 1 100%; }
 
-  /* Одна колонка на экран, листание вбок: grid-auto-columns, а не template,
-     чтобы длинный заголовок не растягивал грид за вьюпорт. */
+  /* Доска на телефоне — вертикальные секции: колонки в столбик, sticky-заголовок,
+     пустые статусы уезжают в ряд чипов, длинная секция режется до 8 карточек. */
   .board {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: calc(100vw - 26px);
-    min-height: 58vh;
-    scroll-snap-type: x mandatory;
+    display: block;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
   }
+  .board-column { width: auto; max-width: none; margin-bottom: 8px; }
+  .board-column.is-empty { display: none; }
+  .board-column.is-empty.is-expanded { display: block; width: auto; max-width: none; padding: 8px; }
+  .board-column.is-empty header,
+  .board-column.is-empty header div { flex-direction: row; align-items: center; }
+  .board-column.is-empty header { border-bottom: 1px solid var(--line); }
+  .board-column.is-empty header h2 { writing-mode: horizontal-tb; letter-spacing: .08em; }
+  .board-column.is-empty .cards { display: grid; }
+  .board-rail { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 10px; }
+  .board-rail button { appearance: none; min-height: 32px; padding: 5px 9px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--surface); color: var(--mut); font-size: 11.5px; cursor: pointer; }
+  .board-rail button::before { content: '＋ '; color: var(--faint); }
+  .board-sections::after { display: none; }
+  #boardToActive { display: none; }
   /* Порты связей висят за краем карточки и обрезаются; на тач-экране перетаскивание
      недоступно — перенос делается долгим тапом в mobile.js. */
   .dependency-port { display: none; }

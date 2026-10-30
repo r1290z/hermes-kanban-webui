@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <title>Hermes KanbanWebUI</title>
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-2" />
-  <link rel="stylesheet" href="/static/style.css?v=20261030-2" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-3" />
+  <link rel="stylesheet" href="/static/style.css?v=20261030-3" />
 </head>
 <body>
   <div class="app-shell">
@@ -64,19 +64,11 @@
 
       <section id="viewBoard" class="view" data-view="board">
         <section id="opsPanel" class="ops-panel" aria-label="operations" hidden></section>
-        <section id="board" class="board" aria-label="kanban board"></section>
-      </section>
-
-      <section id="viewFeed" class="view" data-view="feed" hidden>
-        <p class="view-placeholder" data-i18n="loading">Загрузка…</p>
-      </section>
-
-      <section id="viewList" class="view" data-view="list" hidden>
-        <section class="toolbar" aria-label="list filters">
+        <section class="toolbar board-bar" id="boardBar" aria-label="board filters">
           <div class="filters">
             <input id="listSearch" data-i18n-placeholder="listSearchPlaceholder" placeholder="Поиск по названию, тексту, ID" />
-            <div id="listAssigneeFilter" class="multiselect-host"></div>
             <div id="listStatusFilter" class="multiselect-host"></div>
+            <div id="listAssigneeFilter" class="multiselect-host"></div>
             <label class="check"><input id="listArchived" type="checkbox" /> <span data-i18n="showArchived">Показывать архив</span></label>
           </div>
           <div class="toolbar-actions">
@@ -88,18 +80,33 @@
               <option value="status" data-i18n="status">Статус</option>
             </select>
             <button class="button ghost" id="listSortDir" type="button" data-i18n="listSortDesc">По убыванию</button>
+            <button class="button ghost" id="boardToActive" type="button" data-i18n="toActive" hidden>К активной</button>
+            <div class="mode-switch" role="group" aria-label="board mode">
+              <button type="button" data-board-mode="sections" class="is-active" data-i18n="modeSections">Секции</button>
+              <button type="button" data-board-mode="table" data-i18n="modeTable">Таблица</button>
+            </div>
           </div>
         </section>
-        <section class="list-wrap">
-          <table class="list-table" id="listTable">
-            <thead id="listHead"></thead>
-            <tbody id="listBody"></tbody>
-          </table>
-        </section>
-        <div class="list-foot">
-          <span id="listTotal" class="muted"></span>
-          <button class="button ghost" id="listMore" type="button" data-i18n="listShowMore" hidden>Показать ещё</button>
+        <div class="board-sections" id="boardSections">
+          <section id="board" class="board" aria-label="kanban board"></section>
+          <div class="board-rail" id="boardRail" aria-label="empty statuses"></div>
         </div>
+        <section id="viewList" class="view" data-view="list" hidden>
+          <section class="list-wrap">
+            <table class="list-table" id="listTable">
+              <thead id="listHead"></thead>
+              <tbody id="listBody"></tbody>
+            </table>
+          </section>
+          <div class="list-foot">
+            <span id="listTotal" class="muted"></span>
+            <button class="button ghost" id="listMore" type="button" data-i18n="listShowMore" hidden>Показать ещё</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="viewFeed" class="view" data-view="feed" hidden>
+        <p class="view-placeholder" data-i18n="loading">Загрузка…</p>
       </section>
 
       <section id="viewLog" class="view" data-view="log" hidden>
@@ -231,6 +238,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261030-2"></script>
+  <script type="module" src="/static/app.js?v=20261030-3"></script>
 </body>
 </html>

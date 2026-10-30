@@ -24,7 +24,8 @@ export const labels = {
     liveRuns: 'Live runs', needsAttention: 'Needs attention', queue: 'Queue', completed: 'Completed',
     noActiveRuns: 'no active runs', lastFinished: 'last finished', pulseOverdue: 'pulse overdue',
     loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
-    toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee'
+    toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee',
+    card: 'Card', assign: 'Assign', summaryRuns: 'runs', summaryErrors: 'errors', summaryAvg: 'avg', summaryWindow: 'in 24h',
   },
   en: {
     subtitle: 'Readable operations board', boardDescription: 'Dedicated WebUI over the same DB the Hermes CLI uses', newBoard: 'New board', refresh: 'Refresh', themeDark: 'Switch dark', themeLight: 'Switch light', quickTitle: 'Type a task title and press Enter',
@@ -51,7 +52,8 @@ export const labels = {
     liveRuns: 'Live runs', needsAttention: 'Needs attention', queue: 'Queue', completed: 'Completed',
     noActiveRuns: 'no active runs', lastFinished: 'last finished', pulseOverdue: 'pulse overdue',
     loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
-    toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee'
+    toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee',
+    card: 'Card', assign: 'Assign', summaryRuns: 'runs', summaryErrors: 'errors', summaryAvg: 'avg', summaryWindow: 'in 24h',
   },
   ru: {
     subtitle: 'Доска исполнения задач', boardDescription: 'Отдельный интерфейс к той же базе, что и Hermes CLI', newBoard: 'Новая доска', refresh: 'Обновить', themeDark: 'Тёмная тема', themeLight: 'Светлая тема', quickTitle: 'Введите название задачи и нажмите Enter',
@@ -78,7 +80,8 @@ export const labels = {
     liveRuns: 'Живые прогоны', needsAttention: 'Требует внимания', queue: 'Очередь', completed: 'Завершено',
     noActiveRuns: 'нет активных прогонов', lastFinished: 'последний завершился', pulseOverdue: 'пульс просрочен',
     loadFailed: 'не удалось загрузить', retry: 'Повторить', modeSections: 'Секции', modeTable: 'Таблица',
-    toActive: 'К активной', showAll: 'Показать все', noAssigneeTasks: 'Без исполнителя'
+    toActive: 'К активной', showAll: 'Показать все', noAssigneeTasks: 'Без исполнителя',
+    card: 'Карточка', assign: 'Назначить', summaryRuns: 'прогонов', summaryErrors: 'с ошибкой', summaryAvg: 'средн.', summaryWindow: 'за сутки',
   }
 };
 

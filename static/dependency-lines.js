@@ -1,6 +1,6 @@
-import { api } from './api.js?v=20261030-1';
-import { t } from './i18n.js?v=20261030-1';
-import { state, toast } from './state.js?v=20261030-1';
+import { api } from './api.js?v=20261030-2';
+import { t } from './i18n.js?v=20261030-2';
+import { state, toast } from './state.js?v=20261030-2';
 
 const VIEW_MODES = new Set(['focus', 'all', 'blocked', 'off']);
 let currentData = null;

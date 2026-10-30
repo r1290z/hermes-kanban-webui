@@ -1,17 +1,18 @@
-import { api } from './api.js?v=20261030-1';
-import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-1';
-import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-1';
-import { renderBoard } from './board.js?v=20261030-1';
-import { setupDependencyControls } from './dependency-lines.js?v=20261030-1';
-import { setupForms } from './forms.js?v=20261030-1';
-import { setupMobileFallback } from './mobile.js?v=20261030-1';
-import { setupAppUpdatePrompt } from './update.js?v=20261030-1';
-import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-1';
-import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-1';
-import { state, setBoard, toast } from './state.js?v=20261030-1';
-import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-1';
-import { loadLog, setupLogView } from './log.js?v=20261030-1';
-import { schedulePulse } from './pulse.js?v=20261030-1';
+import { api } from './api.js?v=20261030-2';
+import { applyI18n, setLang, nextLang, t } from './i18n.js?v=20261030-2';
+import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-2';
+import { renderBoard } from './board.js?v=20261030-2';
+import { setupDependencyControls } from './dependency-lines.js?v=20261030-2';
+import { setupForms } from './forms.js?v=20261030-2';
+import { setupMobileFallback } from './mobile.js?v=20261030-2';
+import { setupAppUpdatePrompt } from './update.js?v=20261030-2';
+import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-2';
+import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-2';
+import { state, setBoard, toast } from './state.js?v=20261030-2';
+import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030-2';
+import { loadLog, setupLogView } from './log.js?v=20261030-2';
+import { schedulePulse } from './pulse.js?v=20261030-2';
+import { loadNow } from './now.js?v=20261030-2';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
@@ -80,6 +81,9 @@ export function applyView(view, { updateHash = true } = {}) {
   }
   if (active === 'list') loadList();
   if (active === 'log') loadLog();
+  // Экран «Сейчас» грузит себя сам и показывает состояние ошибки, если API
+  // недоступен: load() при 401 падает раньше и до вью бы не дошёл.
+  if (active === 'now') loadNow();
   return active;
 }
 
@@ -225,6 +229,7 @@ export async function load() {
   await refreshOperationsPanel();
   if (currentView() === 'list') loadList();
   if (currentView() === 'log') loadLog();
+  if (currentView() === 'now') loadNow();
 }
 
 function setupControls() {

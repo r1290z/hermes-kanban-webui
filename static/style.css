@@ -223,6 +223,61 @@ label { color: var(--mut); font-size: 12.5px; }
 .dependency-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; }
 .dependency-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px; }
 
+/* ===== Экран «Сейчас» (пульт прогонов) ===== */
+.now-block { min-width: 0; margin-bottom: 10px; padding: 0 12px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+.now-block .block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 9px 0 8px; border-bottom: 1px solid var(--line); }
+.now-block .block-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+.now-block .count { font-size: 11.5px; color: var(--mut); font-variant-numeric: tabular-nums; }
+.now-list { display: grid; min-width: 0; }
+.now-empty, .now-pending { padding: 12px 0 4px; margin: 0; color: var(--mut); font-size: 12.5px; overflow-wrap: anywhere; }
+.now-pending { color: var(--faint); }
+.now-summary { padding: 9px 0 3px; margin: 0; color: var(--mut); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.now-error { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; padding: 9px 12px; border: 1px solid var(--danger); border-radius: var(--r-md); background: var(--surface); color: var(--danger); font-size: 12.5px; min-width: 0; }
+.now-error span { min-width: 0; overflow-wrap: anywhere; }
+.now-more { margin-top: 8px; }
+
+/* Живой прогон: заголовок → пульс и лимит → действия, полоса во всю ширину. */
+.run-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 3px; padding: 9px 0; border-top: 1px solid var(--line); min-width: 0; }
+.run-row:first-child { border-top: 0; }
+.run-title, .attn-title, .queue-title, .done-title { appearance: none; border: 0; background: none; padding: 0; min-width: 0; text-align: left; font-size: 13.5px; font-weight: 500; line-height: 1.3; color: var(--ink); cursor: pointer; overflow-wrap: anywhere; }
+.run-title { grid-column: 1; grid-row: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-title:hover, .attn-title:hover, .queue-title:hover, .done-title:hover { text-decoration: underline; }
+.run-meta { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; color: var(--mut); font-size: 11.5px; font-variant-numeric: tabular-nums; min-width: 0; }
+.run-meta .clock { color: var(--ink); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.run-meta .pulse { white-space: nowrap; }
+.run-meta .pulse.is-overdue { color: var(--blk); font-weight: 600; white-space: normal; }
+.run-meta .sep, .run-meta .limit { color: var(--faint); white-space: nowrap; }
+.run-meta .profile { color: var(--mut); white-space: nowrap; }
+.run-actions { grid-column: 2; grid-row: 1 / span 2; align-self: center; display: flex; gap: 4px; flex: none; }
+.run-actions .button { padding: 4px 8px; font-size: 11.5px; }
+.now-progress { grid-column: 1 / -1; grid-row: 3; display: block; height: 2px; margin-top: 5px; background: var(--line); border-radius: 1px; overflow: hidden; }
+.now-progress i { display: block; height: 100%; background: var(--run); }
+.now-progress.is-overdue i { background: var(--blk); }
+.run-log { grid-column: 1 / -1; display: grid; gap: 4px; margin: 6px 0 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: var(--mut); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.run-log-row { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.run-log-row time { color: var(--faint); white-space: nowrap; }
+
+/* Требует внимания: причина — словом, одно действие на строку. */
+.attn-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 3px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); min-width: 0; }
+.attn-row:first-child { border-top: 0; }
+.attn-title { grid-column: 1; grid-row: 1; }
+.attn-action { grid-column: 2; grid-row: 1; padding: 4px 8px; font-size: 11.5px; }
+.attn-reason { grid-column: 1 / -1; grid-row: 2; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--blk); }
+
+/* Очередь */
+.queue-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 8px 0; border-top: 1px solid var(--line); min-width: 0; }
+.queue-row:first-child { border-top: 0; }
+.queue-meta { color: var(--mut); font-size: 11.5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* Завершено */
+.done-row { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); min-width: 0; }
+.done-row:first-child { border-top: 0; }
+.done-time { grid-column: 1; grid-row: 1 / span 2; color: var(--faint); font-size: 11.5px; font-variant-numeric: tabular-nums; white-space: nowrap; padding-top: 2px; }
+.done-title { grid-column: 2; grid-row: 1; }
+.done-meta { grid-column: 2; grid-row: 2; display: flex; flex-wrap: wrap; gap: 8px; color: var(--mut); font-size: 11.5px; font-variant-numeric: tabular-nums; min-width: 0; }
+.done-outcome.is-completed { color: var(--ok); }
+.done-outcome.is-blocked, .done-outcome.is-crashed, .done-outcome.is-timed_out, .done-outcome.is-spawn_failed { color: var(--danger); }
+
 /* ===== Drawer ===== */
 .overlay { position: fixed; inset: 0; z-index: 19; background: rgba(0, 0, 0, .5); }
 .drawer {

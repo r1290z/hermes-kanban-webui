@@ -1,9 +1,9 @@
-import { api } from './api.js?v=20261030-1';
-import { t } from './i18n.js?v=20261030-1';
-import { escapeHtml } from './markdown.js?v=20261030-1';
-import { openTaskDrawer } from './drawer.js?v=20261030-1';
-import { state } from './state.js?v=20261030-1';
-import { schedulePulse } from './pulse.js?v=20261030-1';
+import { api } from './api.js?v=20261030-2';
+import { t } from './i18n.js?v=20261030-2';
+import { escapeHtml } from './markdown.js?v=20261030-2';
+import { openTaskDrawer } from './drawer.js?v=20261030-2';
+import { state } from './state.js?v=20261030-2';
+import { schedulePulse } from './pulse.js?v=20261030-2';
 
 const PAGE_SIZE = 100;
 

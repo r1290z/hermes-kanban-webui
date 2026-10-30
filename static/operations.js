@@ -1,8 +1,8 @@
-import { api } from './api.js?v=20261030-1';
-import { t } from './i18n.js?v=20261030-1';
-import { escapeHtml } from './markdown.js?v=20261030-1';
-import { openTaskDrawer } from './drawer.js?v=20261030-1';
-import { state, toast } from './state.js?v=20261030-1';
+import { api } from './api.js?v=20261030-2';
+import { t } from './i18n.js?v=20261030-2';
+import { escapeHtml } from './markdown.js?v=20261030-2';
+import { openTaskDrawer } from './drawer.js?v=20261030-2';
+import { state, toast } from './state.js?v=20261030-2';
 
 function panel() { return document.getElementById('opsPanel'); }
 function toggleButton() { return document.getElementById('opsToggleBtn'); }
@@ -163,7 +163,7 @@ function taskLink(task) {
   return `<button class="ops-task-link" type="button" data-ops-task-id="${escapeHtml(task.id || '')}"><code>${escapeHtml(task.id || '')}</code><span>${escapeHtml(task.title || '')}</span></button>`;
 }
 
-import { formatDuration } from './duration.js?v=20261030-1';
+import { formatDuration } from './duration.js?v=20261030-2';
 export { formatDuration };
 
 export function formatTimestamp(epoch) {

@@ -1,7 +1,7 @@
 // Single home for human-readable duration formatting ("12 с", "4 мин 05 с",
 // "2 ч 05 мин"). Units come from i18n so the same function reads naturally in
 // RU/EN/KO — no per-view copies.
-import { t } from './i18n.js?v=20261030-1';
+import { t } from './i18n.js?v=20261030-2';
 
 export function formatDuration(seconds) {
   if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return '—';
@@ -26,4 +26,16 @@ export function formatDurationCoarse(seconds) {
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   return `${hours} ${t('unitHour')} ${String(minutes).padStart(2, '0')} ${t('unitMin')}`;
+}
+
+// Clock for the run pult: "27:14", "1:05:07" — the elapsed column must line up
+// under the limit ("60 мин") the way the spec draws it, so no unit words here.
+export function formatClock(seconds) {
+  if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return '—';
+  const total = Math.max(0, Math.floor(Number(seconds)));
+  const pad = value => String(value).padStart(2, '0');
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const rest = total % 60;
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(rest)}` : `${pad(minutes)}:${pad(rest)}`;
 }

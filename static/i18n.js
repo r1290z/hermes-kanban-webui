@@ -22,6 +22,7 @@ export const labels = {
     outcome_completed: '완료', outcome_blocked: '막힘', outcome_crashed: '크래시', outcome_timed_out: '시간 초과', outcome_spawn_failed: '실행 실패', outcome_gave_up: '포기', outcome_reclaimed: '회수됨', outcome_running: '실행 중', outcome_scheduled: '예약됨', outcome_released: '반환됨',
     now: 'Now', tabBoard: 'Board', feed: 'Feed', tabLog: 'Log', more: 'More',
     liveRuns: 'Live runs', needsAttention: 'Needs attention', queue: 'Queue', completed: 'Completed',
+    attentionNone: 'Needs attention — none', queueNone: 'Queue — empty', doneNone: 'Completed in 24h — none', queueWaiting: 'in queue',
     noActiveRuns: 'no active runs', lastFinished: 'last finished', pulseOverdue: 'pulse overdue',
     loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
     toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee',
@@ -52,6 +53,7 @@ export const labels = {
     outcome_completed: 'Completed', outcome_blocked: 'Blocked', outcome_crashed: 'Crashed', outcome_timed_out: 'Timed out', outcome_spawn_failed: 'Spawn failed', outcome_gave_up: 'Gave up', outcome_reclaimed: 'Reclaimed', outcome_running: 'Running', outcome_scheduled: 'Scheduled', outcome_released: 'Released',
     now: 'Now', tabBoard: 'Board', feed: 'Feed', tabLog: 'Log', more: 'More',
     liveRuns: 'Live runs', needsAttention: 'Needs attention', queue: 'Queue', completed: 'Completed',
+    attentionNone: 'Needs attention — none', queueNone: 'Queue — empty', doneNone: 'Completed in 24h — none', queueWaiting: 'in queue',
     noActiveRuns: 'no active runs', lastFinished: 'last finished', pulseOverdue: 'pulse overdue',
     loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
     toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee',
@@ -82,6 +84,7 @@ export const labels = {
     outcome_completed: 'Завершено', outcome_blocked: 'Заблокировано', outcome_crashed: 'Авария', outcome_timed_out: 'Таймаут', outcome_spawn_failed: 'Не запустился', outcome_gave_up: 'Сдался', outcome_reclaimed: 'Перехвачен', outcome_running: 'Выполняется', outcome_scheduled: 'Запланирован', outcome_released: 'Возвращён',
     now: 'Сейчас', tabBoard: 'Доска', feed: 'Лента', tabLog: 'Лог', more: 'Ещё',
     liveRuns: 'Живые прогоны', needsAttention: 'Требует внимания', queue: 'Очередь', completed: 'Завершено',
+    attentionNone: 'Требует внимания — нет', queueNone: 'Очередь — пусто', doneNone: 'Завершено за сутки — нет', queueWaiting: 'в очереди',
     noActiveRuns: 'нет активных прогонов', lastFinished: 'последний завершился', pulseOverdue: 'пульс просрочен',
     loadFailed: 'не удалось загрузить', retry: 'Повторить', modeSections: 'Секции', modeTable: 'Таблица',
     toActive: 'К активной', showAll: 'Показать все', noAssigneeTasks: 'Без исполнителя',
@@ -108,6 +111,8 @@ export function applyI18n(root = document) {
   root.documentElement?.setAttribute('lang', currentLang);
   root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   root.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  // Подпись для скринридера, когда видимый текст — только иконка (кнопка «＋» на телефоне).
+  root.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   const toggle = root.getElementById?.('langToggle');
   if (toggle) toggle.textContent = nextLang().toUpperCase();
 }

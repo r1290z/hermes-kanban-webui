@@ -59,7 +59,15 @@ function visibleRows(key) {
   return expanded[key] ? Number.MAX_SAFE_INTEGER : PREVIEW_ROWS;
 }
 
-function block(kind, label, count, body) {
+// Пустая секция — не карточка с заголовком и словом «нет», а одна строка-статус
+// высотой в строку списка (40–44px, спека §4.1): на телефоне вертикаль дороже
+// декора, а «Требует внимания — нет» читается быстрее, чем пустой блок.
+function block(kind, label, count, body, status = '') {
+  if (status) {
+    return `<section class="now-block is-status ${kind}">
+    <p class="now-status">${escapeHtml(status)}</p>
+  </section>`;
+  }
   return `<section class="now-block ${kind}">
     <div class="block-head"><span class="block-label">${escapeHtml(label)}</span><span class="count">${count}</span></div>
     ${body}
@@ -111,8 +119,10 @@ function elapsedOf(entry) {
 }
 
 // Строка прогона по спеке §4.1: заголовок → часы / лимит → пульс → @профиль →
-// полоса прогресса → действия. Часы, лимит и пульс держатся в отдельных
-// элементах, чтобы 10-секундный poll из pulse.js обновлял их по отдельности.
+// действия. Полоса прогресса стоит в той же строке метаданных сразу за своей
+// подписью «13:50 / 180 мин» — отдельным блоком внизу она читалась как чужая.
+// Часы, лимит и пульс держатся в отдельных элементах, чтобы 10-секундный poll из
+// pulse.js обновлял их по отдельности.
 function liveRow(task, entry) {
   const id = escapeHtml(task.id);
   const overdue = Boolean(entry && entry.overdue);
@@ -136,6 +146,7 @@ function liveRow(task, entry) {
     <div class="run-meta">
       <span class="clock" data-pulse-elapsed="${id}">${escapeHtml(clock)}</span>
       ${limitPart}
+      ${bar}
       <span class="pulse${overdue ? ' is-overdue' : ''}" data-pulse-heartbeat="${id}">${escapeHtml(heartbeat)}</span>
       ${profilePart}
     </div>
@@ -143,7 +154,6 @@ function liveRow(task, entry) {
       <button type="button" class="button ghost" data-now-log="${id}">${escapeHtml(t('log'))}</button>
       <button type="button" class="button ghost" data-now-card="${id}">${escapeHtml(t('card'))}</button>
     </div>
-    ${bar}
   </article>`;
 }
 
@@ -189,7 +199,7 @@ function attentionRow(row) {
 
 function attentionBody(rows) {
   if (nowError) return pendingBody(PENDING);
-  if (!rows.length) return `<p class="now-empty">${escapeHtml(t('empty'))}</p>`;
+  if (!rows.length) return `<p class="now-status">${escapeHtml(t('attentionNone'))}</p>`;
   return `<div class="now-list">${rows.map(attentionRow).join('')}</div>`;
 }
 
@@ -206,21 +216,24 @@ function queueRow(task) {
   const id = escapeHtml(task.id);
   const priority = Number(task.priority) || 0;
   const age = Math.max(0, pulseNow - (Number(task.created_at) || 0));
-  const meta = [
-    escapeHtml(t(task.status)),
-    priority > 0 ? `P${priority}` : '',
-    task.assignee ? `@${escapeHtml(task.assignee)}` : escapeHtml(t('noAssigneeTasks')),
-    age > 0 ? escapeHtml(formatDurationCoarse(age)) : ''
-  ].filter(Boolean).join(' · ');
+  // Приоритет — отдельный слот с табличными цифрами: в слитном тексте «P3» и «P2»
+  // читаются одинаково. Возраст подписан словом, иначе «2 мин» — это что, когда?
+  const slots = [
+    `<span class="queue-status">${escapeHtml(t(task.status))}</span>`,
+    `<span class="queue-priority">P${priority}</span>`,
+    `<span class="queue-assignee">${task.assignee ? `@${escapeHtml(task.assignee)}` : escapeHtml(t('noAssigneeTasks'))}</span>`,
+    age > 0 ? `<span class="queue-age">${escapeHtml(t('queueWaiting'))} ${escapeHtml(formatDurationCoarse(age))}</span>` : ''
+  ].filter(Boolean);
+  const sep = '<span class="sep" aria-hidden="true">·</span>';
   return `<article class="queue-row" data-task-id="${id}">
     <button type="button" class="queue-title" data-now-card="${id}">${escapeHtml(task.title)}</button>
-    <span class="queue-meta">${meta}</span>
+    <span class="queue-meta">${slots.join(sep)}</span>
   </article>`;
 }
 
 function queueBody(queue) {
   if (nowError) return pendingBody(PENDING);
-  if (!queue.length) return `<p class="now-empty">${escapeHtml(t('empty'))}</p>`;
+  if (!queue.length) return `<p class="now-status">${escapeHtml(t('queueNone'))}</p>`;
   const limit = visibleRows('now-queue');
   const rows = queue.slice(0, limit).map(queueRow).join('');
   const more = queue.length > limit ? moreButton('now-queue') : '';
@@ -231,14 +244,20 @@ function queueBody(queue) {
 
 function doneRow(run) {
   const id = escapeHtml(run.task_id || '');
-  const outcome = run.outcome || '';
+  // Внутри секции «Завершено» слово «Завершено» в каждой строке — дубль заголовка.
+  // Остаются длительность и когда это было: «30 мин · 25 ч назад».
+  const ended = Number(run.ended_at) || 0;
+  const age = ended && pulseNow > ended ? pulseNow - ended : 0;
+  const ago = age > 0
+    ? `<span class="done-ago">${escapeHtml(formatDurationCoarse(age))} ${escapeHtml(t('pulseAgo'))}</span>`
+    : '';
   return `<article class="done-row" data-task-id="${id}">
     <time class="done-time">${escapeHtml(run.started_at_label || '')}</time>
     <button type="button" class="done-title" data-now-card="${id}">${escapeHtml(run.title || run.task_id || '')}</button>
     <span class="done-meta">
       <span class="done-profile">@${escapeHtml(run.profile || t('unassigned'))}</span>
       <span class="done-duration">${escapeHtml(formatDuration(run.duration_sec))}</span>
-      <span class="done-outcome is-${escapeHtml(outcome || 'running')}">${escapeHtml(outcomeLabel(outcome))}</span>
+      ${ago}
     </span>
   </article>`;
 }
@@ -247,15 +266,16 @@ function doneSummary(all) {
   const errors = all.filter(run => run.outcome && run.outcome !== 'completed').length;
   const durations = all.map(run => Number(run.duration_sec)).filter(value => Number.isFinite(value) && value >= 0);
   const average = durations.length ? durations.reduce((sum, value) => sum + value, 0) / durations.length : 0;
-  return `<p class="now-summary">${all.length} ${escapeHtml(t('summaryRuns'))} ${escapeHtml(t('summaryWindow'))} · ${errors} ${escapeHtml(t('summaryErrors'))} · ${escapeHtml(t('summaryAvg'))} ${escapeHtml(formatDurationCoarse(average))}</p>`;
+  // Ошибки — акцент, а не серый текст рядом с «средн. 12 мин»: их надо замечать.
+  const errorPart = `<span class="sum-errors${errors ? '' : ' is-zero'}">${errors} ${escapeHtml(t('summaryErrors'))}</span>`;
+  return `<p class="now-summary">${all.length} ${escapeHtml(t('summaryRuns'))} ${escapeHtml(t('summaryWindow'))} · ${errorPart} · ${escapeHtml(t('summaryAvg'))} ${escapeHtml(formatDurationCoarse(average))}</p>`;
 }
 
 function doneBody() {
   if (nowError) return pendingBody(PENDING);
-  if (!logRuns.length) return `<p class="now-empty">${escapeHtml(t('empty'))}</p>`;
   const completed = logRuns.filter(run => run.outcome === 'completed');
-  const summary = doneSummary(logRuns);
-  if (!completed.length) return `${summary}<p class="now-empty">${escapeHtml(t('empty'))}</p>`;
+  const summary = logRuns.length ? doneSummary(logRuns) : '';
+  if (!completed.length) return `${summary}<p class="now-status">${escapeHtml(t('doneNone'))}</p>`;
   const limit = visibleRows('now-done');
   const rows = completed.slice(0, limit).map(doneRow).join('');
   const more = completed.length > limit ? moreButton('now-done') : '';
@@ -275,12 +295,18 @@ export function renderNow(data, pulse) {
   const attention = attentionRows(tasks, pult);
   const queue = queueTasks(tasks);
   const completed = logRuns.filter(run => run.outcome === 'completed');
+  // При ошибке счётчики не показываются цифрами: их не из чего взять.
+  const failed = Boolean(nowError);
+  const count = value => (failed ? PENDING : value);
+  const body = (rendered, first) => (failed ? errorBlock({ alert: first }) : rendered);
+  // Пустая секция сворачивается в одну строку-статус: заголовок-карточка с «Нет»
+  // внутри съедал пол-экрана телефона ради нуля информации.
+  const idle = (size, text) => (failed || size > 0 ? '' : text);
   root.innerHTML = [
-    nowError ? errorBlock() : '',
-    block('now-live', t('liveRuns'), running.length, liveBody(running, pult)),
-    block('now-attention', t('needsAttention'), attention.length, attentionBody(attention)),
-    block('now-queue', t('queue'), queue.length, queueBody(queue)),
-    block('now-done', t('completed'), completed.length, doneBody())
+    block('now-live', t('liveRuns'), count(running.length), body(liveBody(running, pult), true)),
+    block('now-attention', t('needsAttention'), count(attention.length), body(attentionBody(attention), false), idle(attention.length, t('attentionNone'))),
+    block('now-queue', t('queue'), count(queue.length), body(queueBody(queue), false), idle(queue.length, t('queueNone'))),
+    block('now-done', t('completed'), count(completed.length), body(doneBody(), false), idle(logRuns.length, t('doneNone')))
   ].join('');
   bind(root);
   // Дальше пульс обновляют существующие [data-pulse-id] каждые 10 секунд.
@@ -306,7 +332,9 @@ function bind(root) {
       renderNow(last.data, last.pulse);
     });
   });
-  root.querySelector('[data-now-retry]')?.addEventListener('click', () => loadNow());
+  root.querySelectorAll('[data-now-retry]').forEach(btn => {
+    btn.addEventListener('click', () => loadNow());
+  });
 }
 
 async function toggleRunLog(btn) {

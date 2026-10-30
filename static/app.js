@@ -255,8 +255,13 @@ export async function load() {
   state.data = data;
   state.latestEventId = data.latest_event_id;
   renderAssigneeControls(data);
+  // На телефоне имя доски из топбара убрано (там оно резалось до «D…») — полное
+  // имя стоит первой строкой панели «Ещё», рядом с выбором доски.
+  const name = (data.board_meta || {}).name || data.board;
   const boardName = document.getElementById('boardName');
-  if (boardName) boardName.textContent = (data.board_meta || {}).name || data.board;
+  if (boardName) boardName.textContent = name;
+  const boardNameFull = document.getElementById('boardNameFull');
+  if (boardNameFull) boardNameFull.textContent = name;
   renderBoardColumns();
   if (boardStatusSelect) {
     boardStatusSelect.setOptions((data.column_order || []).map(status => ({ value: status, label: t(status) })));

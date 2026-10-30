@@ -200,7 +200,6 @@ label { color: var(--mut); font-size: 12.5px; }
 .section-more { width: 100%; margin-top: 8px; }
 .chips { justify-content: flex-start; flex-wrap: wrap; margin-top: 8px; min-width: 0; }
 .chips span, .status { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px 7px; background: var(--surface); font-size: 11.5px; color: var(--mut); max-width: 100%; overflow-wrap: anywhere; }
-.chips .missing-assignee-chip { border-color: var(--blk); background: transparent; color: var(--blk); font-weight: 600; }
 .profile-missing-badge { margin-left: auto; margin-right: 4px; border: 1px solid var(--blk); border-radius: var(--r-sm); padding: 3px 7px; background: transparent; color: var(--blk); font-weight: 600; font-size: 11px; line-height: 1; white-space: nowrap; }
 .card-foot { margin-top: 8px; color: var(--faint); font-size: 11.5px; }
 .relation-badge { color: var(--ink); font-weight: 600; letter-spacing: .02em; }
@@ -363,7 +362,26 @@ label { color: var(--mut); font-size: 12.5px; }
 .worker-log-head { margin-bottom: 8px; }
 .log-tail { max-height: 280px; overflow: auto; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px; font-family: var(--font-mono); font-size: 11.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .timeline, .comment-list { padding-left: 20px; color: var(--mut); }
-.markdown { color: var(--ink); line-height: 1.5; }
+.markdown { color: var(--ink); line-height: 1.5; overflow-wrap: anywhere; }
+.markdown > :first-child { margin-top: 0; }
+.markdown > :last-child { margin-bottom: 0; }
+.markdown h2, .markdown h3, .markdown h4, .markdown h5, .markdown h6 { margin: 14px 0 6px; font-size: 13.5px; font-weight: 600; letter-spacing: 0; }
+.markdown h2 { font-size: 15px; }
+.markdown p { margin: 6px 0; }
+.markdown ul, .markdown ol { margin: 6px 0; padding-left: 20px; }
+.markdown li { margin: 2px 0; }
+.markdown pre { margin: 8px 0; padding: 10px; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.markdown pre code { padding: 0; border: 0; background: transparent; }
+.markdown code { padding: 1px 4px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg); color: var(--ink); font-family: var(--font-mono); font-size: 11.5px; }
+.markdown a { color: var(--run); text-decoration: underline; text-underline-offset: 2px; }
+
+/* Шапка карточки: состояние и исполнитель — первым блоком (спека §4.5). */
+.drawer-state-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.drawer-state-chips { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.drawer-state .chip-profile { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px 7px; background: var(--surface); color: var(--mut); font-weight: 600; font-size: 11.5px; }
+.drawer-state .detail-grid { margin-top: 10px; }
+.drawer-title { margin: 4px 0 8px; }
+.drawer-title h2 { font-size: 17px; margin-bottom: 2px; }
 
 /* ===== Диалоги ===== */
 .modal {
@@ -586,31 +604,25 @@ button.feed-title:hover { text-decoration: underline; }
   .monitor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ===== Телефонная раскладка по классам (ставит mobile.js) =====
+   Нижняя полоса вкладок и полноэкранный лист карточки включаются классами, а не
+   медиазапросом: у раскладки один источник истины — скрипт, который также
+   блокирует прокрутку фона под листом. */
+.tabs.tabs-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 0 2px env(safe-area-inset-bottom); background: var(--surface); border-top: 1px solid var(--line); }
+.tabs.tabs-bottom [role="tab"] { padding: 12px 2px; text-align: center; font-size: 12px; border-radius: 0; }
+.tabs.tabs-bottom [role="tab"][aria-selected="true"], .tabs.tabs-bottom [role="tab"].is-active { box-shadow: inset 0 -2px 0 var(--ink); }
+.drawer.drawer-phone { top: 0; right: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
+
 /* ===== Адаптив: телефон (<760px) =====
-   Вкладки уходят вниз фиксированной полосой, оболочка получает отступ снизу,
-   доска листается по колонке на экран. */
+   Оболочка получает отступ снизу под полосу вкладок, доска листается по колонке
+   на экран. Сами вкладки и drawer переключаются классами выше. */
 @media (max-width: 759px) {
   .app-shell { padding: 10px 10px calc(76px + env(safe-area-inset-bottom)); }
   .topbar { gap: 8px; margin-bottom: 10px; padding-bottom: 8px; }
   .brand b { font-size: 14px; }
   .top-actions { margin-left: auto; }
-
-  .tabs {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 30;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0;
-    padding: 0 2px env(safe-area-inset-bottom);
-    background: var(--surface);
-    border-top: 1px solid var(--line);
-  }
-  .tabs [role="tab"] { padding: 12px 2px; text-align: center; font-size: 12px; border-radius: 0; }
-  .tabs [role="tab"][aria-selected="true"], .tabs [role="tab"].is-active { box-shadow: inset 0 -2px 0 var(--ink); }
+  /* Лист занимает весь экран — фон под ним не прокручивается. */
+  body.drawer-open { overflow: hidden; }
 
   .more-panel { padding: 10px; }
   .more-row > select, .more-row > input, .more-row .button { flex: 1 1 100%; }
@@ -643,7 +655,9 @@ button.feed-title:hover { text-decoration: underline; }
   .dependency-port { display: none; }
   .task-card { padding: 10px; }
 
-  .drawer { width: 100vw; top: 6vh; height: 94vh; border-right: 1px solid var(--line); border-radius: var(--r-md) var(--r-md) 0 0; }
+  /* Ширина — контракт на телефон: лист никогда не шире экрана. Полноэкранный
+     вид задаёт `.drawer.drawer-phone` (класс вешает mobile.js). */
+  .drawer { width: 100vw; }
   .inline-form, .dependency-grid, .detail-grid, .dependency-mini-map, .task-field-grid, .workflow-field-grid { grid-template-columns: 1fr; }
   .dependency-mini-current { grid-template-columns: 1fr; gap: 8px; }
   .dependency-mini-current > span { display: none; }

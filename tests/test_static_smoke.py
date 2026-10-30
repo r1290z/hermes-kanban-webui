@@ -24,6 +24,23 @@ def css_rule(style: str, selector: str) -> str:
     return match.group(1)
 
 
+def css_declarations(style: str, selector: str) -> str:
+    """Объявления правила, в списке селекторов которого есть selector целиком.
+
+    В отличие от css_rule не зависит от порядка селекторов в группе и от того,
+    лежит правило на верхнем уровне или внутри @media: тесту нужен контракт
+    («у детей grid-трека min-width: 0»), а не побайтовая копия style.css.
+    """
+    for match in re.finditer(r'([^{}]+)\{([^}]*)\}', style):
+        head = match.group(1)
+        # прелюдия @media остаётся в head как отдельная строка — она не селектор
+        selectors = [part.strip() for line in head.splitlines() if not line.strip().startswith('@')
+                     for part in line.split(',')]
+        if selector in selectors:
+            return match.group(2).strip()
+    raise AssertionError(f'селектор {selector} не найден в style.css')
+
+
 SPEC_TOKENS = ['--bg', '--surface', '--surface-2', '--line', '--line-strong', '--ink', '--mut',
                '--faint', '--run', '--blk', '--ok', '--danger', '--on-accent', '--r-sm', '--r-md',
                '--shadow-overlay']
@@ -167,14 +184,24 @@ def test_button_hover_keeps_ghost_text_readable():
 
 
 def test_drawer_forms_do_not_overflow_grid_tracks():
+    """Контракт вместо копии CSS: ни один трек формы не требует больше ширины
+    карточки, а дети формы не раздувают трек своим содержимым."""
     root = Path(__file__).resolve().parents[1]
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
 
-    assert 'grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(96px, .4fr) auto' in style
-    assert 'minmax(220px, 1fr)' not in style
-    assert '.inline-form label, .dependency-form { display: grid; gap: 6px; color: var(--mut); font-weight: 600; min-width: 0; }' in style
-    assert '.inline-form input, .inline-form select, .dependency-form select, .dependency-form button { width: 100%; min-width: 0; }' in style
-    assert '.dependency-grid > div { min-width: 0; }' in style
+    # база: треки тянутся долями, а не фиксированной шириной
+    assert 'minmax(220px, 1fr)' not in style, 'фиксированный минимум 220px выносит форму за карточку'
+    for selector in ['.inline-form', '.task-field-grid', '.workflow-field-grid']:
+        rule = css_rule(style, selector)
+        assert 'display: grid' in rule, selector
+        assert 'minmax(0' in rule, f'{selector}: треки должны ужиматься ниже содержимого'
+    for selector in ['.inline-form label', '.dependency-form']:
+        rule = css_declarations(style, selector)
+        assert 'display: grid' in rule and 'min-width: 0' in rule, selector
+    for selector in ['.inline-form input', '.inline-form select', '.dependency-form select', '.dependency-form button']:
+        assert 'width: 100%' in css_declarations(style, selector), selector
+        assert 'min-width: 0' in css_declarations(style, selector), selector
+    assert 'min-width: 0' in css_rule(style, '.dependency-grid > div')
 
 
 def test_dependency_visual_options_and_focus_overlay_contract():
@@ -254,11 +281,14 @@ def test_unassigned_tasks_are_visually_flagged():
         assert phrase in board
     for key in ['profileMissing', 'profileMissingShort']:
         assert key in i18n
-    for css_class in ['.task-card.is-unassigned', '.profile-missing-badge', '.chips .missing-assignee-chip']:
-        assert css_class in style
-    # контракт: нераспределённая карточка помечена акцентом --blk, а не украшением
-    for selector in ['.task-card.is-unassigned', '.profile-missing-badge', '.chips .missing-assignee-chip']:
+    # контракт: нераспределённая карточка помечена акцентом --blk, а не украшением.
+    # Предупреждение одно на карточку: бейдж .profile-missing-badge. Отдельный
+    # .missing-assignee-chip удалён — он дублировал тот же текст.
+    for selector in ['.task-card.is-unassigned', '.profile-missing-badge']:
+        assert selector in style, selector
         assert 'var(--blk)' in css_rule(style, selector), selector
+    assert 'missing-assignee-chip' not in style
+    assert 'missing-assignee-chip' not in board
     assert f'./board.js?v={asset_version()}' in app
     assert f'./i18n.js?v={asset_version()}' in board
     assert '--blk:' in tokens

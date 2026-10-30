@@ -4,7 +4,7 @@ import { setupThemeToggle, updateThemeToggleLabel } from './theme.js?v=20261030-
 import { renderBoard } from './board.js?v=20261030-3';
 import { setupDependencyControls } from './dependency-lines.js?v=20261030-3';
 import { setupForms } from './forms.js?v=20261030-3';
-import { setupMobileFallback } from './mobile.js?v=20261030-3';
+import { setupMobileFallback, setupMobileShell } from './mobile.js?v=20261030-3';
 import { setupAppUpdatePrompt } from './update.js?v=20261030-3';
 import { setupOperationsPanel, refreshOperationsPanel } from './operations.js?v=20261030-3';
 import { closeDrawer, openTaskDrawer } from './drawer.js?v=20261030-3';
@@ -313,6 +313,9 @@ async function main() {
   setupThemeToggle();
   setupControls();
   setupMorePanel();
+  // Раскладка телефона (нижние вкладки, полноэкранный drawer) — до первого рендера,
+  // иначе табы успевают мигнуть наверху.
+  setupMobileShell();
   setupTabs();
   setupBoardMode();
   setupBoardStatusFilter();

@@ -168,3 +168,41 @@ KPI-плиток, дублирующая счётчики колонок. Плю
 
 Operations-панель, массовое создание, AI workflow designer — не переделываются, только прячутся в «Ещё» и
 получают общие токены. Мультидосковость, права, уведомления, серверные агрегаты — не здесь.
+
+## 10. PWA (этап 2, после переработки UI)
+
+Цель: установка на домашний экран Android/iOS, standalone-режим, офлайн-оболочка и фундамент под web-push.
+HTTPS на `ai.r1290z.ru` уже есть (Let's Encrypt до 17.12.2026) — это обязательное условие выполнено.
+
+- `static/manifest.webmanifest`: `name` «Hermes Kanban», `short_name` «Kanban», `start_url` `/#view=now`,
+  `scope` `/`, `display` `standalone`, `background_color` `#0b0c0e`, `theme_color` `#0b0c0e`, `lang` `ru`,
+  иконки 192/512 + 512 `maskable`. `orientation` не фиксировать.
+- `static/icons/`: `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon-180.png` —
+  генерируются из одного SVG-знака скриптом `scripts/make_icons.py` через headless Chrome
+  (`--default-background-color=00000000`, прозрачный фон).
+- `static/sw.js`: precache оболочки с текущим токеном `?v=`; `network-first` для `/api/*` с фолбэком в кэш
+  и ответом `503 {"offline": true}`; `cache-first` для `/static/*`; имя кэша = токен версии, старые кэши
+  удаляются на `activate`; `skipWaiting` только по сообщению со страницы. Обработчики `push` и
+  `notificationclick` (открывают `/#task=<id>`) присутствуют, но на этом этапе пушей никто не отправляет.
+- `kanban_webui/app.py`: два маршрута **до** SPA-fallback — `GET /sw.js` (`application/javascript`,
+  `Cache-Control: no-cache`, `Service-Worker-Allowed: /`) и `GET /manifest.webmanifest`
+  (`application/manifest+json`). Сейчас оба пути отдают `index.html` с `text/html`, из-за чего браузер
+  отказывается регистрировать service worker.
+- `index.html`: `<link rel="manifest">`, `<meta name="theme-color" content="#0b0c0e">`,
+  `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` `black-translucent`,
+  `apple-touch-icon`; кнопка «Установить» по событию `beforeinstallprompt`; на iOS — одноразовая подсказка
+  «Поделиться → На экран „Домой“» (флаг в `localStorage`).
+- Обновление статики: существующий `update.js` показывает баннер «доступно обновление» при новом
+  service worker (`controllerchange`), иначе телефон залипнет на старом интерфейсе.
+- Приёмка: манифест — валидный JSON со всеми обязательными полями; SW регистрируется в headless Chrome;
+  после `Network.emulateNetworkConditions offline` + reload страница отдаёт оболочку, а блоки данных
+  показывают состояние «нет сети · Повторить».
+
+### 10.1 Web-push (этап 3, отдельное решение)
+
+Технически возможно на Android/Chrome (Pixel 8 — да) и на iOS ≥16.4 при установке на домашний экран.
+Требует серверной части: VAPID-ключи (приватный — в env-файл), таблица подписок в
+`~/.hermes/kanban-webui/` (не в `kanban.db`), отправка через `pywebpush` (+11 транзитивных пакетов,
+проверено `uv pip install --dry-run`), фоновый отправитель на systemd-таймере, читающий `task_events.id`
+после курсора. События для отправки: прогон стартовал, прогон завершился, задача заблокирована,
+пульс просрочен (>300 с). Без согласования не реализуется.

@@ -6,9 +6,10 @@ import { t } from './i18n.js?v=20261030-3';
 // needs a mouse: touch never fires dragover, so the board had no working move at all.
 // Long-press a card and pick the target column from a sheet instead of a text prompt.
 const MOVE_STATUSES = ['scheduled', 'triage', 'todo', 'ready', 'blocked', 'done', 'archived'];
+const PHONE_QUERY = '(max-width: 760px)';
 
-function isPhone() {
-  return matchMedia('(max-width: 760px)').matches;
+export function isPhoneLayout() {
+  return matchMedia(PHONE_QUERY).matches;
 }
 
 function closeSheet() {
@@ -68,11 +69,42 @@ function openMoveSheet(card) {
   document.body.appendChild(sheet);
 }
 
+// Телефонная раскладка включается классами, а не только медиазапросом: вкладки
+// уезжают вниз фиксированной полосой, drawer становится полноэкранным листом.
+// Классы снимаются при возврате к десктопной ширине, поэтому одна и та же
+// страница обслуживает обе раскладки без перезагрузки.
+function applyPhoneLayout() {
+  const phone = isPhoneLayout();
+  document.documentElement.classList.toggle('is-phone', phone);
+  const tabs = document.querySelector('.tabs');
+  if (tabs) tabs.classList.toggle('tabs-bottom', phone);
+  const drawer = document.getElementById('drawer');
+  if (drawer) drawer.classList.toggle('drawer-phone', phone && drawer.classList.contains('open'));
+  if (!phone) document.body.classList.remove('drawer-open');
+}
+
+export function setupMobileShell() {
+  applyPhoneLayout();
+  const media = window.matchMedia(PHONE_QUERY);
+  if (media.addEventListener) media.addEventListener('change', applyPhoneLayout);
+  else media.addListener(applyPhoneLayout);
+  window.addEventListener('orientationchange', applyPhoneLayout);
+  window.addEventListener('resize', applyPhoneLayout);
+  // Полноэкранный лист перекрывает страницу целиком: фон не должен скроллиться
+  // под ним, иначе палец на карточке уводит саму карточку.
+  document.addEventListener('kanban:drawer-open', () => {
+    if (isPhoneLayout()) document.body.classList.add('drawer-open');
+  });
+  document.addEventListener('kanban:drawer-close', () => {
+    document.body.classList.remove('drawer-open');
+  });
+}
+
 export function setupMobileFallback() {
   // Long-press surfaces as contextmenu on touch; the mouse path keeps working too.
   document.addEventListener('contextmenu', ev => {
     const card = ev.target.closest?.('.task-card');
-    if (!card || !isPhone()) return;
+    if (!card || !isPhoneLayout()) return;
     ev.preventDefault();
     openMoveSheet(card);
   });

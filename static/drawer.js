@@ -4,13 +4,51 @@ import { renderMarkdown, escapeHtml } from './markdown.js?v=20261030-3';
 import { renderMonitor } from './monitor.js?v=20261030-3';
 import { state, toast } from './state.js?v=20261030-3';
 
+const PHONE_QUERY = '(max-width: 759px)';
+
+// Порядок разделов карточки задан спекой §4.5: состояние и исполнитель →
+// заголовок → markdown → действия → зависимости → комментарии → вложения →
+// прогоны и события. Менять порядок можно только вместе со спекой.
+
+// Адрес карточки — `#task=<id>`: ссылку можно переслать, открывается сразу в drawer.
+// Хэш переписывается replaceState, поэтому переходов в истории не появляется и
+// hashchange не срабатывает повторно (иначе роутер открывал бы карточку по кругу).
+function hashPairs() {
+  const pairs = [];
+  for (const part of (location.hash || '').replace(/^#/, '').split('&')) {
+    if (!part) continue;
+    const index = part.indexOf('=');
+    pairs.push(index === -1 ? [part, ''] : [part.slice(0, index), part.slice(index + 1)]);
+  }
+  return pairs;
+}
+
+function hashView() {
+  const pair = hashPairs().find(([key]) => key === 'view');
+  if (!pair) return '';
+  try { return decodeURIComponent(pair[1]); } catch { return pair[1]; }
+}
+
+function syncTaskHash(taskId) {
+  const pairs = hashPairs().filter(([key]) => key !== 'task');
+  const view = hashView() || (matchMedia(PHONE_QUERY).matches ? 'now' : 'board');
+  const rest = pairs.filter(([key]) => key !== 'view');
+  const next = [['view', view], ...rest];
+  if (taskId) next.push(['task', taskId]);
+  const url = `#${next.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')}`;
+  if (location.hash !== url) history.replaceState(null, '', url);
+}
+
 export function closeDrawer() {
   const drawer = document.getElementById('drawer');
   const overlay = document.getElementById('overlay');
   drawer.classList.remove('open');
+  drawer.classList.remove('drawer-phone');
   drawer.setAttribute('aria-hidden', 'true');
   overlay.hidden = true;
   state.selectedTaskId = null;
+  syncTaskHash(null);
+  document.dispatchEvent(new CustomEvent('kanban:drawer-close'));
   document.dispatchEvent(new CustomEvent('kanban:dependency-selected', { detail: { taskId: null } }));
 }
 
@@ -100,6 +138,13 @@ function assigneeOptions(assignees, current) {
     .join('');
 }
 
+// Одно предупреждение на карточку: нет исполнителя — значит, задачу никто не
+// возьмёт. Раньше тот же текст висел ещё и вторым бейджем в шапке.
+function assigneeWarning(task) {
+  if (task.assignee) return '';
+  return `<span class="profile-missing-badge" title="${escapeHtml(t('profileMissing'))}">${escapeHtml(t('profileMissingShort'))}</span>`;
+}
+
 function dependencyList(ids, role, taskId) {
   if (!ids?.length) return `<p class="muted">${t('none')}</p>`;
   return `<ul class="dependency-list">${ids.map(id => {
@@ -161,12 +206,12 @@ function formatSize(bytes) {
 function attachmentIcon(item) {
   const type = String(item.content_type || '');
   const name = String(item.filename || '').toLowerCase();
-  if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/.test(name)) return '🖼';
-  if (type.startsWith('audio/') || /\.(mp3|wav|ogg|flac)$/.test(name)) return '🎧';
-  if (type.startsWith('video/') || /\.(mp4|mkv|webm|mov)$/.test(name)) return '🎬';
-  if (/\.(zip|gz|tar|7z|rar)$/.test(name)) return '🗜';
-  if (/\.(md|txt|log)$/.test(name)) return '📄';
-  return '📎';
+  if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/.test(name)) return 'фото';
+  if (type.startsWith('audio/') || /\.(mp3|wav|ogg|flac)$/.test(name)) return 'звук';
+  if (type.startsWith('video/') || /\.(mp4|mkv|webm|mov)$/.test(name)) return 'видео';
+  if (/\.(zip|gz|tar|7z|rar)$/.test(name)) return 'архив';
+  if (/\.(md|txt|log)$/.test(name)) return 'текст';
+  return 'файл';
 }
 
 // Workers often store attachments without a content_type (kanban_complete
@@ -180,7 +225,7 @@ function isImageAttachment(item) {
 
 function attachmentItemHtml(item) {
   const thumb = item.missing
-    ? `<span class="attachment-thumb missing" title="${t('attachmentLost')}">✕</span>`
+    ? `<span class="attachment-thumb missing" title="${t('attachmentLost')}">нет</span>`
     : (isImageAttachment(item)
       ? `<img class="attachment-thumb" data-attachment-preview="${item.id}" alt="${escapeHtml(item.filename)}" />`
       : `<span class="attachment-thumb">${attachmentIcon(item)}</span>`);
@@ -191,7 +236,7 @@ function attachmentItemHtml(item) {
     : escapeHtml(item.filename || '—');
   const download = item.missing
     ? ''
-    : `<button class="button ghost" data-attachment-download="${item.id}" data-attachment-filename="${escapeHtml(item.filename || '')}" title="${t('download')}">⬇</button>`;
+    : `<button class="button ghost" data-attachment-download="${item.id}" data-attachment-filename="${escapeHtml(item.filename || '')}" title="${t('download')}">скачать</button>`;
   return `<li class="attachment-item">${thumb}<div class="attachment-info"><span class="attachment-name">${name}</span><small>${meta}</small></div>${download}</li>`;
 }
 
@@ -252,9 +297,13 @@ export async function openTaskDrawer(taskId) {
   const drawer = document.getElementById('drawer');
   const overlay = document.getElementById('overlay');
   drawer.classList.add('open');
+  // На телефоне лист занимает весь экран (класс вешает mobile.js).
+  drawer.classList.toggle('drawer-phone', matchMedia(PHONE_QUERY).matches);
   drawer.setAttribute('aria-hidden', 'false');
   overlay.hidden = false;
   drawer.innerHTML = '<div class="drawer-loading">Loading…</div>';
+  syncTaskHash(taskId);
+  document.dispatchEvent(new CustomEvent('kanban:drawer-open'));
 
   const [detail, boardData, homes] = await Promise.all([
     api.task(state.board, taskId),
@@ -266,27 +315,43 @@ export async function openTaskDrawer(taskId) {
   const childOptions = taskOptions(availableTasks(boardData, task.id, detail.links.children));
 
   drawer.innerHTML = `
-    <div class="drawer-header">
-      <div><code>${escapeHtml(task.id)}</code><h2>${escapeHtml(task.title)}</h2></div>
-      <button class="icon-button" id="drawerClose" aria-label="close">×</button>
-    </div>
+    <section class="drawer-section drawer-state">
+      <div class="drawer-state-row">
+        <div class="drawer-state-chips">
+          <span class="status status-${escapeHtml(task.status)}">${escapeHtml(t(task.status))}</span>
+          ${task.assignee
+            ? `<span class="chip-profile">@${escapeHtml(task.assignee)}</span>`
+            : assigneeWarning(task)}
+          ${task.priority ? `<span class="num" title="${escapeHtml(t('priority'))}">P${Number(task.priority)}</span>` : ''}
+        </div>
+        <button class="icon-button" id="drawerClose" aria-label="${escapeHtml(t('close'))}">×</button>
+      </div>
+      <form id="taskMetaForm" class="inline-form">
+        <label>${t('assignee')}<select name="assignee">${assigneeOptions(boardData.assignees || [], task.assignee)}</select></label>
+        <label>${t('priority')}<input name="priority" type="number" value="${Number(task.priority || 0)}" /></label>
+        <button class="button primary" data-assignee-save data-priority-save>${t('save')}</button>
+      </form>
+      <div class="drawer-meta detail-grid">
+        <span><strong>${t('workspace')}</strong>${escapeHtml(task.workspace_kind || 'scratch')}</span>
+        <span><strong>${t('createdBy')}</strong>${escapeHtml(task.created_by || '—')}</span>
+        <span><strong>${t('created')}</strong>${formatTime(task.created_at)}</span>
+        ${task.tenant ? `<span><strong>Tenant</strong>${escapeHtml(task.tenant)}</span>` : ''}
+      </div>
+    </section>
 
-    <form id="taskMetaForm" class="drawer-section inline-form">
-      <label>${t('title')}<input id="editTitle" name="title" value="${escapeHtml(task.title)}" /></label>
-      <label>${t('assignee')}<select name="assignee">${assigneeOptions(boardData.assignees || [], task.assignee)}</select></label>
-      <label>${t('priority')}<input name="priority" type="number" value="${Number(task.priority || 0)}" /></label>
-      <button class="button primary" data-assignee-save data-priority-save>${t('save')}</button>
+    <header class="drawer-header drawer-title">
+      <div><h2>${escapeHtml(task.title)}</h2><code>${escapeHtml(task.id)}</code></div>
+    </header>
+    <form id="titleForm" class="comment-form">
+      <input id="editTitle" name="title" value="${escapeHtml(task.title)}" aria-label="${escapeHtml(t('title'))}" />
+      <button class="button">${t('save')}</button>
     </form>
 
-    <div class="drawer-meta detail-grid">
-      <span><strong>${t('status')}</strong>${escapeHtml(task.status)}</span>
-      <span><strong>${t('workspace')}</strong>${escapeHtml(task.workspace_kind || 'scratch')}</span>
-      <span><strong>${t('createdBy')}</strong>${escapeHtml(task.created_by || '—')}</span>
-      <span><strong>${t('created')}</strong>${formatTime(task.created_at)}</span>
-      ${task.tenant ? `<span><strong>Tenant</strong>${escapeHtml(task.tenant)}</span>` : ''}
-    </div>
-
-    ${workflowDetailSection(task)}
+    <section class="drawer-section">
+      <div class="section-title"><h3>${t('body')}</h3></div>
+      <div class="markdown">${task.body ? renderMarkdown(task.body) : `<p class="muted">— ${t('noDescription')} —</p>`}</div>
+      <form id="bodyEditForm" class="comment-form"><textarea name="body" rows="7">${escapeHtml(task.body || '')}</textarea><button class="button">${t('save')}</button></form>
+    </section>
 
     <div class="drawer-actions">
       <button data-action="triage" data-status="triage" class="button ghost">→ triage</button>
@@ -296,14 +361,6 @@ export async function openTaskDrawer(taskId) {
       <button data-action="complete" data-status="done" class="button ghost">${t('complete')}</button>
       <button data-action="archive" data-status="archived" class="button ghost danger-btn">${t('archive')}</button>
     </div>
-
-    <section id="monitorMount"></section>
-
-    <section class="drawer-section">
-      <div class="section-title"><h3>${t('body')}</h3></div>
-      <div class="markdown">${task.body ? renderMarkdown(task.body) : `<p class="muted">— ${t('noDescription')} —</p>`}</div>
-      <form id="bodyEditForm" class="comment-form"><textarea name="body" rows="7">${escapeHtml(task.body || '')}</textarea><button class="button">${t('save')}</button></form>
-    </section>
 
     <section class="drawer-section">
       <div class="section-title"><h3>${t('dependencies')}</h3></div>
@@ -317,11 +374,6 @@ export async function openTaskDrawer(taskId) {
           <form id="addChildForm" class="dependency-form"><select id="addChildSelect" name="child_id">${childOptions}</select><button class="button">+ ${t('child')}</button></form>
         </div>
       </div>
-    </section>
-
-    <section class="drawer-section">
-      <div class="section-title"><h3>${t('notifyHomeChannels')}</h3></div>
-      ${homeChannelButtons(homes.home_channels)}
     </section>
 
     <section class="drawer-section"><h3>${t('comments')} (${detail.comments.length})</h3>
@@ -338,12 +390,27 @@ export async function openTaskDrawer(taskId) {
       </form>
     </section>
 
-    <section class="drawer-section"><h3>${t('runs')}</h3><ol class="timeline">${detail.runs.length ? detail.runs.map(r => `<li><code>${r.id}</code> ${runSummary(r)}</li>`).join('') : `<li>${t('empty')}</li>`}</ol></section>
-    <section class="drawer-section"><h3>${t('events')}</h3><ol class="timeline">${detail.events.map(e => `<li><code>${e.id}</code> ${escapeHtml(e.kind)} ${eventPayload(e.payload)} <small>${formatTime(e.created_at)}</small></li>`).join('')}</ol></section>
+    <section class="drawer-section">
+      <h3>${t('runs')}</h3>
+      <ol class="timeline">${detail.runs.length ? detail.runs.map(r => `<li><code>${r.id}</code> ${runSummary(r)}</li>`).join('') : `<li>${t('empty')}</li>`}</ol>
+      <section id="monitorMount"></section>
+    </section>
+
+    <section class="drawer-section">
+      <h3>${t('events')}</h3>
+      <ol class="timeline">${detail.events.map(e => `<li><code>${e.id}</code> ${escapeHtml(e.kind)} ${eventPayload(e.payload)} <small>${formatTime(e.created_at)}</small></li>`).join('')}</ol>
+    </section>
 
     <section class="drawer-section">
       <div class="section-title worker-log-head"><h3>${t('workerLog')}</h3><button class="button ghost" data-log-refresh>${t('refresh')}</button></div>
       <pre id="workerLogContent" class="log-tail"></pre>
+    </section>
+
+    ${workflowDetailSection(task)}
+
+    <section class="drawer-section">
+      <div class="section-title"><h3>${t('notifyHomeChannels')}</h3></div>
+      ${homeChannelButtons(homes.home_channels)}
     </section>
   `;
   applyI18n(drawer);
@@ -374,10 +441,17 @@ export async function openTaskDrawer(taskId) {
     ev.preventDefault();
     const data = new FormData(ev.currentTarget);
     await api.updateTask(state.board, task.id, {
-      title: String(data.get('title') || '').trim(),
       assignee: String(data.get('assignee') || ''),
       priority: Number(data.get('priority') || 0)
     });
+    toast('saved');
+    document.dispatchEvent(new CustomEvent('kanban:refresh'));
+    await openTaskDrawer(task.id);
+  });
+  drawer.querySelector('#titleForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const data = new FormData(ev.currentTarget);
+    await api.updateTask(state.board, task.id, { title: String(data.get('title') || '').trim() });
     toast('saved');
     document.dispatchEvent(new CustomEvent('kanban:refresh'));
     await openTaskDrawer(task.id);

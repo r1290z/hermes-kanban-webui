@@ -118,6 +118,27 @@ def create_app() -> FastAPI:
     def index() -> FileResponse:
         return FileResponse(str(STATIC_DIR / "index.html"))
 
+    # Service worker и манифест — ДО SPA-fallback. Иначе оба пути отдают
+    # index.html с text/html, и браузер отказывается регистрировать SW
+    # (а манифест с неверным типом не читается вовсе).
+    @app.get("/sw.js")
+    def service_worker() -> FileResponse:
+        return FileResponse(
+            str(STATIC_DIR / "sw.js"),
+            media_type="application/javascript",
+            headers={
+                "Cache-Control": "no-cache",
+                "Service-Worker-Allowed": "/",
+            },
+        )
+
+    @app.get("/manifest.webmanifest")
+    def manifest() -> FileResponse:
+        return FileResponse(
+            str(STATIC_DIR / "manifest.webmanifest"),
+            media_type="application/manifest+json",
+        )
+
     @app.get("/{path:path}")
     def spa_fallback(path: str) -> FileResponse:
         # API 404s are handled by the router before this fallback. Everything

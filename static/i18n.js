@@ -26,6 +26,8 @@ export const labels = {
     loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
     toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee',
     card: 'Card', assign: 'Assign', summaryRuns: 'runs', summaryErrors: 'errors', summaryAvg: 'avg', summaryWindow: 'in 24h',
+    feedMine: 'Needs me', feedAll: 'All', feedBlocked: 'Blockers', feedToday: 'Today', feedYesterday: 'Yesterday', feedEvents: 'events', feedAttention: 'need me', feedResolved: 'resolved', feedEmptyMine: 'nothing needs a decision right now', feedEmptyBlocked: 'no blockers',
+    kindCreated: 'created', kindEdited: 'edited', kindCommented: 'comment', kindAttached: 'attachment', kindBlocked: 'blocked', kindUnblocked: 'unblocked', kindCompleted: 'completed', kindCrashed: 'crashed', kindTimedOut: 'timed out', kindGaveUp: 'gave up', kindSpecified: 'questions', kindWorkerResult: 'result', kindSpawned: 'spawned', kindClaimed: 'claimed', kindAssigned: 'assigned', kindStatus: 'status', kindArchived: 'archived', kindPromoted: 'promoted', kindScheduled: 'backlog',
   },
   en: {
     subtitle: 'Readable operations board', boardDescription: 'Dedicated WebUI over the same DB the Hermes CLI uses', newBoard: 'New board', refresh: 'Refresh', themeDark: 'Switch dark', themeLight: 'Switch light', quickTitle: 'Type a task title and press Enter',
@@ -54,6 +56,8 @@ export const labels = {
     loadFailed: 'could not load', retry: 'Retry', modeSections: 'Sections', modeTable: 'Table',
     toActive: 'To active', showAll: 'Show all', noAssigneeTasks: 'No assignee',
     card: 'Card', assign: 'Assign', summaryRuns: 'runs', summaryErrors: 'errors', summaryAvg: 'avg', summaryWindow: 'in 24h',
+    feedMine: 'Needs me', feedAll: 'All', feedBlocked: 'Blockers', feedToday: 'Today', feedYesterday: 'Yesterday', feedEvents: 'events', feedAttention: 'need me', feedResolved: 'resolved', feedEmptyMine: 'nothing needs a decision right now', feedEmptyBlocked: 'no blockers',
+    kindCreated: 'created', kindEdited: 'edited', kindCommented: 'comment', kindAttached: 'attachment', kindBlocked: 'blocked', kindUnblocked: 'unblocked', kindCompleted: 'completed', kindCrashed: 'crashed', kindTimedOut: 'timed out', kindGaveUp: 'gave up', kindSpecified: 'questions', kindWorkerResult: 'result', kindSpawned: 'spawned', kindClaimed: 'claimed', kindAssigned: 'assigned', kindStatus: 'status', kindArchived: 'archived', kindPromoted: 'promoted', kindScheduled: 'backlog',
   },
   ru: {
     subtitle: 'Доска исполнения задач', boardDescription: 'Отдельный интерфейс к той же базе, что и Hermes CLI', newBoard: 'Новая доска', refresh: 'Обновить', themeDark: 'Тёмная тема', themeLight: 'Светлая тема', quickTitle: 'Введите название задачи и нажмите Enter',
@@ -82,6 +86,8 @@ export const labels = {
     loadFailed: 'не удалось загрузить', retry: 'Повторить', modeSections: 'Секции', modeTable: 'Таблица',
     toActive: 'К активной', showAll: 'Показать все', noAssigneeTasks: 'Без исполнителя',
     card: 'Карточка', assign: 'Назначить', summaryRuns: 'прогонов', summaryErrors: 'с ошибкой', summaryAvg: 'средн.', summaryWindow: 'за сутки',
+    feedMine: 'Требует меня', feedAll: 'Всё', feedBlocked: 'Блокировки', feedToday: 'Сегодня', feedYesterday: 'Вчера', feedEvents: 'событий', feedAttention: 'ждут меня', feedResolved: 'снято', feedEmptyMine: 'сейчас ничего не ждёт решения', feedEmptyBlocked: 'блокировок нет',
+    kindCreated: 'создана', kindEdited: 'правка', kindCommented: 'комментарий', kindAttached: 'вложение', kindBlocked: 'блокировка', kindUnblocked: 'разблокирована', kindCompleted: 'завершена', kindCrashed: 'авария', kindTimedOut: 'таймаут', kindGaveUp: 'сдался', kindSpecified: 'вопросы', kindWorkerResult: 'результат', kindSpawned: 'запуск', kindClaimed: 'забран', kindAssigned: 'назначена', kindStatus: 'статус', kindArchived: 'в архив', kindPromoted: 'в работу', kindScheduled: 'в бэклог',
   }
 };
 

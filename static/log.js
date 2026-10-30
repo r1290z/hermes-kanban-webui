@@ -48,7 +48,7 @@ function runRowHtml(run) {
     <div class="log-row-main">
       <time class="log-time">${escapeHtml(run.started_at_label || '')}</time>
       <span class="log-profile">${escapeHtml(run.profile || t('unassigned'))}</span>
-      <span class="log-title">${escapeHtml(run.title || run.task_id || '')}</span>
+      <button type="button" class="log-title" data-open-task="${escapeHtml(run.task_id || '')}">${escapeHtml(run.title || run.task_id || '')}</button>
       <span class="log-duration">${escapeHtml(formatDuration(run.duration_sec))}</span>
       <span class="log-outcome is-${escapeHtml(outcome || 'running')}">${escapeHtml(outcomeLabel(outcome))}</span>
       <button type="button" class="button ghost log-toggle" data-log-toggle>${escapeHtml(t('logDetails'))}</button>
@@ -74,8 +74,7 @@ function eventRowHtml(event) {
       <time class="log-time">${escapeHtml(event.created_at_label || '')}</time>
       <span class="log-kind">${escapeHtml(event.kind)}</span>
       <span class="log-profile">${escapeHtml(event.profile || '')}</span>
-      <span class="log-title">${escapeHtml(event.title || event.task_id || '')}</span>
-      <button type="button" class="button ghost" data-open-task="${escapeHtml(event.task_id || '')}">${escapeHtml(t('logOpenTask'))}</button>
+      <button type="button" class="log-title" data-open-task="${escapeHtml(event.task_id || '')}">${escapeHtml(event.title || event.task_id || '')}</button>
     </div>
     ${payload ? `<div class="log-row-details">${payload}</div>` : ''}
   </article>`;
@@ -257,13 +256,6 @@ export function setupLogView() {
   });
 
   document.getElementById('logMore')?.addEventListener('click', () => loadLog({ append: true }));
-
-  document.getElementById('logFiltersToggle')?.addEventListener('click', ev => {
-    const filters = document.getElementById('logFilters');
-    if (!filters) return;
-    const open = filters.classList.toggle('is-open');
-    ev.currentTarget.setAttribute('aria-expanded', String(open));
-  });
 
   host.addEventListener('click', ev => {
     const toggle = ev.target.closest('[data-log-toggle]');

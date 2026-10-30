@@ -111,23 +111,20 @@
 
       <section id="viewLog" class="view" data-view="log" hidden>
         <section class="toolbar log-toolbar" aria-label="log filters">
-          <div class="log-filters" id="logFilters">
-            <button class="button ghost log-filters-toggle" id="logFiltersToggle" type="button" data-i18n="toolbarToggle" aria-expanded="false">Фильтры и действия</button>
-            <div class="filters">
-              <select id="logAssignee" aria-label="profile"></select>
-              <select id="logOutcome" aria-label="outcome"></select>
-              <select id="logSince" aria-label="period">
-                <option value="all" data-i18n="logSinceAll">За всё время</option>
-                <option value="today" data-i18n="logSinceToday">Сегодня</option>
-                <option value="7d" data-i18n="logSince7d">7 дней</option>
-                <option value="30d" data-i18n="logSince30d">30 дней</option>
-              </select>
-              <span id="logKindFilter" hidden>
-                <select id="logKind" aria-label="event kind"></select>
-              </span>
-              <input id="logSearch" data-i18n-placeholder="logSearchPlaceholder" placeholder="Поиск по summary" />
-              <label class="check"><input id="logHeartbeat" type="checkbox" /> <span data-i18n="logShowHeartbeat">Показывать heartbeat</span></label>
-            </div>
+          <div class="filters" id="logFilters">
+            <select id="logAssignee" aria-label="profile"></select>
+            <select id="logOutcome" aria-label="outcome"></select>
+            <select id="logSince" aria-label="period">
+              <option value="all" data-i18n="logSinceAll">За всё время</option>
+              <option value="today" data-i18n="logSinceToday">Сегодня</option>
+              <option value="7d" data-i18n="logSince7d">7 дней</option>
+              <option value="30d" data-i18n="logSince30d">30 дней</option>
+            </select>
+            <span id="logKindFilter" hidden>
+              <select id="logKind" aria-label="event kind"></select>
+            </span>
+            <input id="logSearch" data-i18n-placeholder="logSearchPlaceholder" placeholder="Поиск по summary" />
+            <label class="check"><input id="logHeartbeat" type="checkbox" /> <span data-i18n="logShowHeartbeat">Показывать heartbeat</span></label>
           </div>
           <div class="toolbar-actions">
             <button class="button ghost is-active" id="logModeRuns" type="button" data-i18n="logRuns">Прогоны</button>

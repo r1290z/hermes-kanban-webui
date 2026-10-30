@@ -13,6 +13,7 @@ import { createMultiSelect, loadList, setupListView } from './list.js?v=20261030
 import { loadLog, setupLogView } from './log.js?v=20261030-3';
 import { schedulePulse } from './pulse.js?v=20261030-3';
 import { loadNow } from './now.js?v=20261030-3';
+import { loadFeed, refreshFeed, setupFeedView } from './feed.js?v=20261030-3';
 
 let boardStatusSelect = null;
 let boardStatusFilter = [];
@@ -95,6 +96,7 @@ export function applyView(view, { updateHash = true } = {}) {
   }
   if (active === 'list') loadList();
   if (active === 'log') loadLog();
+  if (active === 'feed') loadFeed();
   // Экран «Сейчас» грузит себя сам и показывает состояние ошибки, если API
   // недоступен: load() при 401 падает раньше и до вью бы не дошёл.
   if (active === 'now') loadNow();
@@ -263,6 +265,9 @@ export async function load() {
   if (currentView() === 'list') loadList();
   if (currentView() === 'log') loadLog();
   if (currentView() === 'now') loadNow();
+  // Лента обновляется только пока открыта её первая страница: иначе poll
+  // сбрасывал бы подгрузку «Показать ещё» (см. refreshFeed).
+  if (currentView() === 'feed') refreshFeed();
 }
 
 function setupControls() {
@@ -313,6 +318,7 @@ async function main() {
   setupBoardStatusFilter();
   setupListView();
   setupLogView();
+  setupFeedView();
   setupDependencyControls();
   setupForms(load);
   setupMobileFallback();

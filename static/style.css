@@ -476,21 +476,25 @@ td.list-pulse { color: var(--mut); }
 td.list-pulse .pulse-full { display: none; }
 td.list-pulse .is-overdue { color: var(--danger); font-weight: 600; }
 
-/* ===== Лог выполнения ===== */
-.log-filters { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.log-filters .filters { flex: 1; min-width: 0; }
-#logSearch { flex: 1 1 200px; min-width: 0; }
-.log-wrap { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
-.log-list { display: flex; flex-direction: column; }
-.log-row { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-.log-row:last-child { border-bottom: 0; }
+/* ===== Лог выполнения =====
+   Одна строка фильтров вместо панели-карточки, моно-таймстемпы и плотность
+   строки 40-44px. Логика и курсорная пагинация остаются в log.js. */
+.log-toolbar { align-items: flex-start; }
+.log-toolbar .filters { flex: 1 1 320px; }
+#logSearch { flex: 1 1 180px; min-width: 0; }
+.log-toolbar .toolbar-actions { align-items: center; }
+.log-wrap { margin-top: 6px; min-width: 0; }
+.log-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.log-row { display: flex; flex-direction: column; justify-content: center; min-height: 41px; padding: 6px 4px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
 .log-row:hover { background: var(--surface-2); }
-.log-row-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.log-time { color: var(--mut); font-size: 11.5px; white-space: nowrap; min-width: 44px; }
+.log-row-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.log-time { color: var(--mut); font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 44px; }
 .log-profile { font-weight: 600; font-size: 11.5px; color: var(--mut); white-space: nowrap; }
-.log-title { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
-.log-duration { font-size: 11.5px; color: var(--mut); white-space: nowrap; }
-.log-kind { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.log-title { appearance: none; flex: 1 1 220px; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; overflow-wrap: anywhere; }
+button.log-title { cursor: pointer; }
+button.log-title:hover { text-decoration: underline; }
+.log-duration { font-family: var(--font-mono); font-size: 11.5px; color: var(--mut); white-space: nowrap; }
+.log-kind { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); white-space: nowrap; }
 .log-outcome { font-size: 11px; padding: 2px 8px; border-radius: var(--r-sm); border: 1px solid var(--line); white-space: nowrap; color: var(--mut); }
 .log-outcome.is-completed { color: var(--ok); border-color: var(--ok); }
 .log-outcome.is-blocked, .log-outcome.is-crashed, .log-outcome.is-timed_out { color: var(--danger); border-color: var(--danger); }
@@ -503,7 +507,44 @@ td.list-pulse .is-overdue { color: var(--danger); font-weight: 600; }
 .log-error { color: var(--danger); }
 .log-row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .log-chip { font-size: 11px; color: var(--mut); }
-.log-empty { padding: 32px; text-align: center; color: var(--mut); }
+.log-empty { padding: 32px 0; text-align: center; color: var(--mut); }
+
+/* ===== Лента =====
+   Поток событий по дням. Плотность выше, чем у карточек доски: время моно,
+   тип uppercase, метаданные одной строкой, действия — только под «Требует меня». */
+.feed-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 10px; border-bottom: 1px solid var(--line); }
+.feed-chip { appearance: none; display: inline-flex; align-items: baseline; gap: 6px; min-height: 30px; padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--surface); color: var(--mut); font-size: 12px; cursor: pointer; }
+.feed-chip:hover { color: var(--ink); border-color: var(--mut); }
+.feed-chip.is-active { background: var(--surface-2); color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--ink); }
+.feed-chip-count { font-variant-numeric: tabular-nums; font-size: 11px; color: var(--faint); }
+.feed-chip.is-active .feed-chip-count { color: var(--mut); }
+.feed-day { border-bottom: 1px solid var(--line); }
+.feed-day-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; padding: 10px 0 6px; }
+.feed-day-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+.feed-day-sum { font-size: 11.5px; color: var(--mut); font-variant-numeric: tabular-nums; }
+.feed-event { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: baseline; gap: 2px 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+.feed-event:first-of-type { border-top: 0; }
+.feed-event:hover { background: var(--surface-2); }
+.feed-time { font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.feed-body { display: grid; gap: 2px; min-width: 0; }
+.feed-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.feed-kind { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); white-space: nowrap; }
+.feed-kind.is-blocked { color: var(--blk); }
+.feed-kind.is-bad { color: var(--danger); }
+.feed-kind.is-ok { color: var(--ok); }
+.feed-kind.is-run { color: var(--run); }
+.feed-title { appearance: none; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); font-size: 13px; line-height: 1.35; text-align: left; overflow-wrap: anywhere; }
+button.feed-title { cursor: pointer; }
+button.feed-title:hover { text-decoration: underline; }
+.feed-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; font-size: 11.5px; color: var(--mut); min-width: 0; }
+.feed-sep { color: var(--faint); }
+.feed-state { color: var(--faint); }
+.feed-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.feed-actions .button { min-height: 26px; padding: 2px 9px; font-size: 11.5px; }
+.feed-empty { padding: 28px 0; margin: 0; text-align: center; color: var(--mut); font-size: 12.5px; }
+.feed-error { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--danger); border-radius: var(--r-sm); color: var(--danger); font-size: 12.5px; min-width: 0; }
+.feed-error-text { min-width: 0; overflow-wrap: anywhere; }
+.feed-more { display: flex; justify-content: center; padding: 12px 0 4px; }
 
 /* ===== Вложения (drawer) ===== */
 .attachment-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
@@ -609,9 +650,23 @@ td.list-pulse .is-overdue { color: var(--danger); font-weight: 600; }
   .attachment-item { padding: 6px 8px; gap: 8px; }
   .attachment-thumb { width: 44px; height: 44px; min-width: 44px; font-size: 18px; }
   .attachment-form { flex-wrap: wrap; }
-  .log-filters { flex-direction: column; align-items: stretch; width: 100%; }
-  .log-filters-toggle { display: block; width: 100%; }
+  /* Лог: на телефоне шесть контролов в одну строку не влезают. Держим две
+     плотные строки: три селекта сжимаются до трети ширины, поиск и heartbeat — ниже. */
+  .log-toolbar .filters { flex: 1 1 100%; gap: 6px; }
+  .log-toolbar .filters #logAssignee, .log-toolbar .filters #logOutcome, .log-toolbar .filters #logSince { flex: 1 1 0; min-width: 0; }
+  .log-toolbar .filters #logSearch { flex: 1 1 150px; }
+  .log-toolbar .filters .check { flex: 0 0 auto; }
+  .log-toolbar .toolbar-actions { flex: 1 1 100%; justify-content: flex-start; }
   .log-title { flex: 1 1 100%; order: 3; }
+  .log-row { padding: 7px 2px; }
+
+  /* Лента: слева узкая колонка времени, справа тип, заголовок и метаданные —
+     ничего не вылезает за экран, горизонтальной прокрутки нет. */
+  .feed-chips { gap: 4px; }
+  .feed-chip { flex: 0 1 auto; }
+  .feed-day-head { gap: 1px 8px; }
+  .feed-day-sum { font-size: 11px; }
+  .feed-event { grid-template-columns: 40px minmax(0, 1fr); gap: 1px 8px; padding: 8px 0; }
 }
 
 /* Список: на телефоне строки превращаются в карточки — без боковой прокрутки. */

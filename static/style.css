@@ -362,6 +362,9 @@ label { color: var(--mut); font-size: 12.5px; }
 .worker-log-head { margin-bottom: 8px; }
 .log-tail { max-height: 280px; overflow: auto; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px; font-family: var(--font-mono); font-size: 11.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .timeline, .comment-list { padding-left: 20px; color: var(--mut); }
+/* Пейлоады событий — однострочный JSON; без переноса они уезжают за правую
+   границу карточки на 320px (видно по scrollWidth у .timeline li). */
+.timeline li, .timeline code, .comment-list p { overflow-wrap: anywhere; }
 .markdown { color: var(--ink); line-height: 1.5; overflow-wrap: anywhere; }
 .markdown > :first-child { margin-top: 0; }
 .markdown > :last-child { margin-bottom: 0; }
@@ -611,7 +614,10 @@ button.feed-title:hover { text-decoration: underline; }
 .tabs.tabs-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 0 2px env(safe-area-inset-bottom); background: var(--surface); border-top: 1px solid var(--line); }
 .tabs.tabs-bottom [role="tab"] { padding: 12px 2px; text-align: center; font-size: 12px; border-radius: 0; }
 .tabs.tabs-bottom [role="tab"][aria-selected="true"], .tabs.tabs-bottom [role="tab"].is-active { box-shadow: inset 0 -2px 0 var(--ink); }
-.drawer.drawer-phone { top: 0; right: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
+/* Полноэкранный лист обязан быть выше полосы вкладок (z-index 30): иначе таб-бар
+   ложится поверх низа карточки, перекрывает кнопки действий и «съедает» часть
+   текста. Пока лист открыт, вкладки недоступны — закрывается он крестиком. */
+.drawer.drawer-phone { top: 0; right: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 40; border: 0; border-radius: 0; padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
 
 /* ===== Адаптив: телефон (<760px) =====
    Оболочка получает отступ снизу под полосу вкладок, доска листается по колонке

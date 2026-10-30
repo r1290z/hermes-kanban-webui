@@ -6,11 +6,11 @@
 // «Всё» — весь поток; «Блокировки» — только блокировки. Инлайн-действия есть
 // только под «Требует меня» и только там, где действие действительно доступно
 // сейчас: разблокировать, назначить, посмотреть лог просроченного прогона.
-import { api } from './api.js?v=20261030-3';
-import { t, lang } from './i18n.js?v=20261030-3';
-import { escapeHtml } from './markdown.js?v=20261030-3';
-import { state, toast } from './state.js?v=20261030-3';
-import { openTaskDrawer } from './drawer.js?v=20261030-3';
+import { api } from './api.js?v=20261030-4';
+import { t, lang } from './i18n.js?v=20261030-4';
+import { escapeHtml } from './markdown.js?v=20261030-4';
+import { state, toast } from './state.js?v=20261030-4';
+import { openTaskDrawer } from './drawer.js?v=20261030-4';
 
 // Событий внимания мало (одно на десятки heartbeat'ов и spawn'ов), поэтому первая
 // страница широкая: узкое окно оставило бы дефолтный чип пустым при живых данных.

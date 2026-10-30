@@ -6,13 +6,13 @@
 // Четыре блока в фиксированном порядке: живые прогоны, требует внимания,
 // очередь, завершено. Блоки рисуются всегда — при нуле прогонов, при ошибке
 // сети и при 401 в них стоит осмысленный текст, пустого экрана не бывает.
-import { api } from './api.js?v=20261030-3';
-import { t } from './i18n.js?v=20261030-3';
-import { escapeHtml } from './markdown.js?v=20261030-3';
-import { state, toast } from './state.js?v=20261030-3';
-import { openTaskDrawer } from './drawer.js?v=20261030-3';
-import { schedulePulse } from './pulse.js?v=20261030-3';
-import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-3';
+import { api } from './api.js?v=20261030-4';
+import { t } from './i18n.js?v=20261030-4';
+import { escapeHtml } from './markdown.js?v=20261030-4';
+import { state, toast } from './state.js?v=20261030-4';
+import { openTaskDrawer } from './drawer.js?v=20261030-4';
+import { schedulePulse } from './pulse.js?v=20261030-4';
+import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-4';
 
 const QUEUE_STATUSES = ['scheduled', 'todo', 'ready', 'triage'];
 const DAY_SECONDS = 86400;

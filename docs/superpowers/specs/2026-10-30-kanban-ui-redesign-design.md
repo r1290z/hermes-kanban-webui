@@ -206,3 +206,33 @@ HTTPS на `ai.r1290z.ru` уже есть (Let's Encrypt до 17.12.2026) — э
 проверено `uv pip install --dry-run`), фоновый отправитель на systemd-таймере, читающий `task_events.id`
 после курсора. События для отправки: прогон стартовал, прогон завершился, задача заблокирована,
 пульс просрочен (>300 с). Без согласования не реализуется.
+
+### 10.2 Web-push: контракт реализации
+
+Единственная новая зависимость проекта: `pywebpush` (+`cryptography`, `requests`, `http-ece`, `py-vapid`).
+
+- **VAPID:** пара генерируется один раз скриптом `scripts/make_vapid.py` в
+  `~/.hermes/kanban-webui/vapid-private.pem` (chmod 600). Публичный ключ отдаётся странице, приватный
+  не покидает сервер и не попадает в git.
+- **Хранилище подписок:** SQLite `~/.hermes/kanban-webui/push.db`, таблица
+  `subscriptions(id INTEGER PRIMARY KEY, endpoint TEXT UNIQUE, p256dh TEXT, auth TEXT, ua TEXT, created_at INTEGER)`.
+  `kanban.db` не трогать — он общий с CLI и диспетчером.
+- **Маршруты** — новый модуль `kanban_webui/push_view.py`, подключается в `app.py`:
+  `GET /api/push/key` → `{"public_key": "<base64url>"}`;
+  `POST /api/push/subscribe` `{endpoint, keys:{p256dh, auth}, ua}` → 201, upsert по `endpoint`;
+  `DELETE /api/push/subscribe` `{endpoint}` → 204.
+- **Отправитель:** `scripts/push_notifier.py` + `deploy/systemd/hermes-kanban-push.{service,timer}`,
+  `OnUnitActiveSec=30s`. Курсор в `~/.hermes/kanban-webui/push-cursor.json` (`{"last_event_id": N}`),
+  читает `task_events` с `id > last_event_id`.
+- **События для пуша (только эти):** `completed`, `worker_result` с `exit_code != 0`, `crashed`,
+  `timed_out`, `blocked`. Никогда: `heartbeat` (575 записей из 1300 — чистый шум), `created`, `edited`,
+  `promoted`, `dependency_wait`, `attached`.
+- **Пейлоад:** `{title:"Kanban", body:"Прогон завершён · t_4f464521 · 30 мин", tag:"task:t_4f464521",
+  task_id:"t_4f464521", url:"/#task=t_4f464521"}`. Заголовок задачи в текст уведомления **не попадает**
+  по умолчанию — он виден на локскрине; включается `PUSH_INCLUDE_TITLE=true`.
+- **Мёртвые подписки:** `410 Gone` / `404` от FCM → запись удаляется из базы.
+- **Клиент:** кнопка «Включить уведомления» в панели «Ещё», подписка только по жесту пользователя;
+  состояние показывается явно — «включены» / «запрещены в браузере» / «не поддерживается».
+- **Приёмка:** подписка появляется в `push.db`; `scripts/push_notifier.py --dry-run` печатает пейлоад
+  для каждого нового события; реальная доставка проверяется на Pixel 8 вручную (в отчёте — время отправки
+  и время прихода).

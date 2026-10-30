@@ -1,9 +1,9 @@
-import { api } from './api.js?v=20261030-3';
-import { t } from './i18n.js?v=20261030-3';
-import { escapeHtml } from './markdown.js?v=20261030-3';
-import { openTaskDrawer } from './drawer.js?v=20261030-3';
-import { state } from './state.js?v=20261030-3';
-import { formatDuration } from './duration.js?v=20261030-3';
+import { api } from './api.js?v=20261030-4';
+import { t } from './i18n.js?v=20261030-4';
+import { escapeHtml } from './markdown.js?v=20261030-4';
+import { openTaskDrawer } from './drawer.js?v=20261030-4';
+import { state } from './state.js?v=20261030-4';
+import { formatDuration } from './duration.js?v=20261030-4';
 
 const PAGE_SIZE = 50;
 

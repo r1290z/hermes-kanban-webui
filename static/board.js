@@ -1,9 +1,9 @@
-import { t } from './i18n.js?v=20261030-8';
-import { escapeHtml } from './markdown.js?v=20261030-8';
-import { openTaskDrawer } from './drawer.js?v=20261030-8';
-import { attachDragHandlers } from './dragdrop.js?v=20261030-8';
-import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261030-8';
-import { schedulePulse } from './pulse.js?v=20261030-8';
+import { t } from './i18n.js?v=20261030-9';
+import { escapeHtml } from './markdown.js?v=20261030-9';
+import { openTaskDrawer } from './drawer.js?v=20261030-9';
+import { attachDragHandlers } from './dragdrop.js?v=20261030-9';
+import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261030-9';
+import { schedulePulse } from './pulse.js?v=20261030-9';
 
 // Один DOM — две раскладки (колонки на десктопе, секции на телефоне, CSS).
 // Плотная карточка: id не переносится, метаданные одной строкой, нулевые

@@ -16,6 +16,7 @@ dependencies = [
   "uvicorn",
   "pydantic",
   "python-multipart",
+  "pywebpush",
 ]
 
 [project.urls]

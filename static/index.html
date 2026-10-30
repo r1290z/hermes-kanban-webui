@@ -12,8 +12,8 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon-180.png" />
   <title>Hermes KanbanWebUI</title>
-  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-8" />
-  <link rel="stylesheet" href="/static/style.css?v=20261030-8" />
+  <link rel="stylesheet" href="/static/design-tokens.css?v=20261030-9" />
+  <link rel="stylesheet" href="/static/style.css?v=20261030-9" />
 </head>
 <body>
   <div class="app-shell">
@@ -66,6 +66,9 @@
         <!-- Появляется только по beforeinstallprompt (pwa.js): на iOS события нет,
              там работает подсказка «Поделиться → На экран „Домой“» ниже. -->
         <button class="button ghost" id="installBtn" type="button" data-i18n="installApp" hidden>Установить</button>
+        <!-- Web-push (§10.2): подписка только по жесту, состояние — отдельной строкой. -->
+        <button class="button ghost" id="pushBtn" type="button" data-i18n="pushEnable" hidden>Включить уведомления</button>
+        <span class="push-state" id="pushState" role="status" hidden></span>
       </div>
       <div class="more-row">
         <input id="searchInput" data-i18n-placeholder="search" placeholder="Поиск по названию, тексту, ID" />
@@ -259,6 +262,6 @@ Task two"></textarea>
     </form>
   </dialog>
 
-  <script type="module" src="/static/app.js?v=20261030-8"></script>
+  <script type="module" src="/static/app.js?v=20261030-9"></script>
 </body>
 </html>

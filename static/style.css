@@ -750,6 +750,11 @@ button.feed-title:hover { text-decoration: underline; }
 .sw-update-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 
 /* Подсказка про установку на iOS: одна полоска под шапкой, показывается один раз. */
+/* Web-push (§10.2): состояние подписки — отдельной строкой рядом с кнопкой,
+   чтобы «включены» и «запрещены в браузере» не выглядели одинаково. */
+.push-state { font-size: 12px; color: var(--mut); align-self: center; }
+.push-state[hidden] { display: none; }
+
 .ios-hint { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); color: var(--mut); font-size: 12.5px; }
 .ios-hint[hidden] { display: none; }
 .ios-hint-text { min-width: 0; overflow-wrap: anywhere; }

@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from .auth import require_auth
 from .config import STATIC_DIR, get_settings
 from .kanban_api import router as kanban_router
+from .push_view import router as push_router
 from .service_status import service_status
 
 
@@ -110,6 +111,8 @@ def create_app() -> FastAPI:
         return service_status()
 
     app.include_router(kanban_router, dependencies=[Depends(require_auth)])
+    # Web-push (§10.2): подписки живут в своём push.db, kanban.db не трогаем.
+    app.include_router(push_router, dependencies=[Depends(require_auth)])
 
     if STATIC_DIR.is_dir():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

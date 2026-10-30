@@ -1,0 +1,17 @@
+[Unit]
+Description=KanbanWebUI — отправка web-push по событиям Kanban
+Documentation=file:///home/hermes/projects/hermes-kanban-webui/FORK.md
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/projects/hermes-kanban-webui
+# Окружение то же, что у самого WebUI: оттуда берётся каталог состояния
+# (push.db, vapid-private.pem, push-cursor.json). PUSH_* — необязательные
+# переопределения (PUSH_INCLUDE_TITLE, PUSH_VAPID_SUB, PUSH_TTL).
+EnvironmentFile=-%h/.hermes/kanban-webui.env
+Environment=HERMES_AGENT_ROOT=%h/.hermes/hermes-agent
+Environment=HERMES_KANBAN_WEBUI_STATE=%h/.hermes/kanban-webui
+ExecStart=%h/projects/hermes-kanban-webui/.venv/bin/python %h/projects/hermes-kanban-webui/scripts/push_notifier.py
+Nice=10
+TimeoutStartSec=120

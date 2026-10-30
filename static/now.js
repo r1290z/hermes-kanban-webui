@@ -9,13 +9,13 @@
 // Пустая секция (кроме живых прогонов, у них своя строка простоя) сжимается в
 // одну строку-статус «Требует внимания — нет»: заголовок-карточка с «Нет»
 // внутри стоит дороже, чем нулевая информация в ней.
-import { api, isOfflineError } from './api.js?v=20261030-8';
-import { t } from './i18n.js?v=20261030-8';
-import { escapeHtml } from './markdown.js?v=20261030-8';
-import { state, toast } from './state.js?v=20261030-8';
-import { openTaskDrawer } from './drawer.js?v=20261030-8';
-import { schedulePulse } from './pulse.js?v=20261030-8';
-import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-8';
+import { api, isOfflineError } from './api.js?v=20261030-9';
+import { t } from './i18n.js?v=20261030-9';
+import { escapeHtml } from './markdown.js?v=20261030-9';
+import { state, toast } from './state.js?v=20261030-9';
+import { openTaskDrawer } from './drawer.js?v=20261030-9';
+import { schedulePulse } from './pulse.js?v=20261030-9';
+import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-9';
 
 const QUEUE_STATUSES = ['scheduled', 'todo', 'ready', 'triage'];
 const DAY_SECONDS = 86400;

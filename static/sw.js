@@ -15,7 +15,7 @@
 // skipWaiting только по сообщению со страницы: обновление не должно
 // перезагружать интерфейс из-под пальца, баннер показывает update.js.
 
-const VERSION = '20261030-8';
+const VERSION = '20261030-9';
 const CACHE = `kanban-${VERSION}`;
 const ASSET_QUERY = `?v=${VERSION}`;
 
@@ -41,6 +41,7 @@ const MODULES = [
   'operations.js',
   'pulse.js',
   'pwa.js',
+  'push.js',
   'state.js',
   'theme.js',
   'update.js'
@@ -184,8 +185,9 @@ async function networkFirstShell(request) {
   }
 }
 
-// Пушей на этом этапе никто не отправляет: обработчики — заготовка под этап
-// web-push (§10.1), пейлоад уже описан контрактом §10.2.
+// web-push (§10.1–10.2): пейлоад собирает scripts/push_notifier.py — заголовок
+// задачи в тексте по умолчанию не идёт (виден на локскрине), тап открывает
+// карточку по /#task=<id>.
 self.addEventListener('push', event => {
   let payload = {};
   try {

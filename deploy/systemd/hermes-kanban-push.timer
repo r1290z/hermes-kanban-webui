@@ -1,0 +1,14 @@
+[Unit]
+Description=KanbanWebUI — тик отправки web-push каждые 30 с
+
+[Timer]
+# Первый тик через минуту после загрузки: база Kanban к этому моменту уже есть.
+OnBootSec=60s
+# Дальше — раз в 30 с после завершения предыдущего прогона (не «каждые 30 с
+# по календарю»): два отправителя разом не пересекутся на одном курсоре.
+OnUnitActiveSec=30s
+AccuracySec=5s
+Unit=hermes-kanban-push.service
+
+[Install]
+WantedBy=timers.target

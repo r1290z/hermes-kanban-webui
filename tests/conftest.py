@@ -1,7 +1,15 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
+
+# Hermes-бутстрап, которого касается импорт kanban_db, в «чужом» venv делает
+# os.execv в интерпретатор из ~/.hermes/tools: pytest молча умирает посреди
+# прогона (exit 1, без трейсбека). WebUI ничего не доустанавливает — флаг гасит
+# ленивую доустановку на всё время тестов.
+os.environ.setdefault("HERMES_DISABLE_LAZY_INSTALLS", "1")
 
 
 @pytest.fixture()

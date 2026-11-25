@@ -26,7 +26,9 @@ Issues = "https://github.com/r1290z/hermes-kanban-webui/issues"
 Upstream = "https://github.com/PriuS2/HermesKanban"
 
 [project.optional-dependencies]
-test = ["pytest", "httpx"]
+# ruamel.yaml — рантайм-зависимость hermes_cli.kanban_db (через utils/hermes_yaml):
+# без неё импорт падает в чистом окружении, а с ним — весь набор тестов.
+test = ["pytest", "httpx", "ruamel.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

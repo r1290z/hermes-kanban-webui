@@ -45,10 +45,17 @@ jobs:
             tag="v${version}"
           fi
           git fetch --tags --force
-          git rev-parse --verify --quiet "refs/tags/${tag}"
-          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          # Тег может ещё не существовать (обычный push в main): это не ошибка,
+          # релиз просто пропускается, а не красит прогон в красный.
+          if git rev-parse --verify --quiet "refs/tags/${tag}" >/dev/null; then
+            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Тега ${tag} нет — релиз не создаётся." >&2
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Extract changelog section
+        if: steps.tag.outputs.tag != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -70,6 +77,7 @@ jobs:
           PY
 
       - name: Create release if missing
+        if: steps.tag.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash

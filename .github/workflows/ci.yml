@@ -58,15 +58,11 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
-          node --check static/api.js
-          node --check static/app.js
-          node --check static/board.js
-          node --check static/drawer.js
-          node --check static/dragdrop.js
-          node --check static/forms.js
-          node --check static/markdown.js
-          node --check static/mobile.js
-          node --check static/monitor.js
+          # Каждый модуль оболочки: список вручную отставал от static/ и пропускал
+          # dependency-lines.js, list.js, now.js — ровно те файлы, что ломаются чаще.
+          for f in static/*.js; do
+            node --check "$f"
+          done
 
       - name: Lint DESIGN.md
         run: npx -y @google/design.md lint DESIGN.md

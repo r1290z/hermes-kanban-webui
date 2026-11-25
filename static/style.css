@@ -165,16 +165,14 @@ label { color: var(--mut); font-size: 12.5px; }
    есть «＋», — но узкой: ширину делят колонки с задачами. */
 .board-column.is-empty { flex: 1 1 132px; min-width: 104px; max-width: 220px; padding: 8px 6px; }
 .board-column.is-empty .cards { display: none; }
-.board-column.is-empty header { padding: 4px 0 6px; border-bottom: 0; align-items: flex-start; }
-.board-column.is-empty header div { gap: 4px; flex-wrap: wrap; }
-/* Узкая дорожка: подпись влезает целиком («ЗАБЛОКИРОВАНЫ», а не «ЗАБЛОКИРО…»),
-   а нулевой счётчик не нужен — пустоту видно по самой колонке. */
-.board-column.is-empty header h2 { white-space: normal; overflow-wrap: break-word; line-height: 1.25; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
-.board-column.is-empty header small { display: none; }
-.board-column.is-empty .mini-add { width: 24px; height: 24px; }
-/* Зона броска для пустого статуса: пунктир без подписи. Слово «Нет» шесть раз
-   подряд — шум; намерение читается по рамке, а действие есть в шапке («＋»). */
-.column-empty { flex: 1 1 auto; min-height: 56px; border: 1px dashed var(--line); border-radius: var(--r-sm); }
+.board-column.is-empty header { padding: 4px 0 6px; border-bottom: 0; }
+.board-column.is-empty header div { gap: 0; }
+/* Подпись занимает всю шапку: «ЗАБЛОКИРОВАНЫ» влезает одной строкой и не
+   рвётся на «ЗАБЛОКИРОВАН / Ы». Кнопка «＋» переехала в зону броска. */
+.board-column.is-empty header h2 { white-space: nowrap; overflow: visible; font-size: 11px; letter-spacing: .02em; text-transform: uppercase; }
+/* Пунктирная зона пустого статуса — цель для броска карточки и кнопка «＋». */
+.column-empty { flex: 1 1 auto; display: grid; place-items: center; min-height: 56px; border: 1px dashed var(--line); border-radius: var(--r-sm); }
+.column-empty .mini-add { width: 28px; height: 28px; }
 .cards { position: relative; z-index: 2; display: grid; align-content: start; gap: 8px; min-width: 0; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-top: 8px; padding-right: 2px; scrollbar-width: thin; }
 .empty { border: 1px dashed var(--line-strong); border-radius: var(--r-md); padding: 18px; color: var(--faint); text-align: center; }
 .drop-target { outline: 2px solid var(--run); }

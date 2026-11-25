@@ -163,12 +163,18 @@ export function renderBoard(data) {
     const classes = ['board-column'];
     if (!tasks.length) classes.push('is-empty');
     if (!tasks.length && expanded) classes.push('is-expanded');
-    return `<section class="${classes.join(' ')}" data-status="${escapeHtml(status)}">
-      <header><div><h2>${escapeHtml(t(status))}</h2><small class="num">${tasks.length}</small></div><button type="button" class="mini-add" data-status="${escapeHtml(status)}" aria-label="${escapeHtml(t('taskCreate'))}">＋</button></header>
+    // Пустой статус: подпись во всю ширину шапки (иначе «ЗАБЛОКИРОВАНЫ» рвался
+    // на «Ы»), а «＋» живёт в пунктирной зоне — она же цель для броска карточки.
+    const head = !tasks.length
+      ? `<header><div><h2>${escapeHtml(t(status))}</h2></div></header>
       <div class="drop-placeholder"></div>
-      ${!tasks.length ? '<div class="column-empty" aria-hidden="true"></div>' : ''}
+      <div class="column-empty"><button type="button" class="mini-add" data-status="${escapeHtml(status)}" aria-label="${escapeHtml(t('taskCreate'))}">＋</button></div>`
+      : `<header><div><h2>${escapeHtml(t(status))}</h2><small class="num">${tasks.length}</small></div><button type="button" class="mini-add" data-status="${escapeHtml(status)}" aria-label="${escapeHtml(t('taskCreate'))}">＋</button></header>
+      <div class="drop-placeholder"></div>
       <div class="cards">${shown.map(card).join('')}</div>
-      ${more}
+      ${more}`;
+    return `<section class="${classes.join(' ')}" data-status="${escapeHtml(status)}">
+      ${head}
     </section>`;
   }).join('');
 

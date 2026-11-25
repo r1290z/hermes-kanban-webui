@@ -7,14 +7,47 @@ KanbanWebUI is intentionally a thin Web/API layer over Hermes' existing
 dispatcher, or worker protocol. The Hermes CLI and this WebUI read/write the
 same SQLite board data.
 
+## This fork
+
+This repository is a maintained fork of
+[PriuS2/HermesKanban](https://github.com/PriuS2/HermesKanban) (Apache-2.0). What it adds:
+
+- **Russian UI** as a third language next to Korean and English, on by default;
+  the header button cycles RU → EN → KO.
+- **Dark theme by default**, light theme still available.
+- **Desktop layout rework**: status lanes fill the viewport instead of fixed 320 px
+  columns, each column scrolls on its own, cards follow the density contract
+  (91–110 px), and the task table is a 40 px single-line row.
+- **PWA**: installable, offline shell, update banner, service worker served from
+  explicit routes.
+- **Web-push** notifications on run completion/failure (VAPID, `pywebpush`).
+- **Token entry in the browser** on `401`, token passed in the URL fragment.
+
+[FORK.md](FORK.md) (Russian) has the full list and the deployment notes
+(systemd user units, env file, push setup).
+
 ## Screenshots
 
-![Kanban board overview](docs/assets/screenshots/kanban-board-overview.png)
+![Desktop board](docs/assets/screenshots/desktop-board-1440.png)
 
-The main board screenshot is captured in light mode with English demo data. It
-shows the same Hermes Kanban tasks as the CLI, with responsive columns, filters,
-task creation, drag-and-drop status changes, running work, and visible
-parent/child dependency lines across a multi-step launch workflow.
+Desktop board at 1440×900: seven status lanes filling the viewport, the empty
+statuses kept as narrow drop targets, per-column scrolling, dependency lines.
+Captured from this fork in dark theme with the Russian UI.
+
+![Task list](docs/assets/screenshots/desktop-list-1440.png)
+
+The same tasks as a table: one 40 px row per task, sortable columns, counters
+grouped into a single cell.
+
+![Mobile board](docs/assets/screenshots/phone-board-390.png)
+
+Phone layout at 390×844: sections instead of columns, empty statuses collapsed
+into a chip row, bottom tabs.
+
+![Kanban board overview (upstream)](docs/assets/screenshots/kanban-board-overview.png)
+
+Upstream screenshot (light mode, English demo data) — the board before this fork's
+redesign, with filters, task creation, drag-and-drop and dependency lines.
 
 ![AI Workflow Designer](docs/assets/screenshots/ai-workflow-designer.png)
 
@@ -67,7 +100,7 @@ Kanban data:
   parent-child dependencies.
 - Workflow draft storage, board-scoped draft APIs, immutable applied drafts, and
   backend guards that prevent non-applyable AI proposals from being applied.
-- Korean UI by default with an English toggle, plus light/dark themes.
+- Russian UI by default (RU/EN/KO toggle), dark theme by default, light theme available.
 - Optional token auth for `/api/*` endpoints.
 - Loopback-first runtime with Host-header and cross-origin mutation checks for
   safer localhost/Tailscale usage.
@@ -93,7 +126,7 @@ export HERMES_AGENT_ROOT="$HOME/.hermes/hermes-agent"
 ## Quick install from Git
 
 ```bash
-git clone https://github.com/PriuS2/HermesKanban.git ~/.local/share/hermes-kanban
+git clone https://github.com/r1290z/hermes-kanban-webui.git ~/.local/share/hermes-kanban
 cd ~/.local/share/hermes-kanban
 ./scripts/install.sh
 hermes-kanban doctor

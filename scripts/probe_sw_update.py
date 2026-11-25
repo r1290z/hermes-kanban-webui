@@ -21,6 +21,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -30,9 +31,9 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SW_PATH = ROOT / "static" / "sw.js"
-CHROME = os.environ.get(
-    "PROBE_CHROME", "/home/hermes/.hermes/tools/chromium-1208/chrome-linux64/chrome"
-)
+CHROME = (os.environ.get("PROBE_CHROME")
+          or shutil.which("google-chrome") or shutil.which("chromium")
+          or os.path.expanduser("~/.hermes/tools/chromium-1208/chrome-linux64/chrome"))
 TEST_SUFFIX = "-updtest"
 
 

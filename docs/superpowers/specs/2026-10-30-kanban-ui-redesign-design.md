@@ -1,7 +1,7 @@
 # KanbanWebUI: переработка интерфейса — «пульт, доска, лента»
 
 Дата: 2026-10-30 · Статус: согласовано с владельцем в чате, к реализации
-Проект: `/home/hermes/projects/hermes-kanban-webui` (форк `PriuS2/HermesKanban`, vanilla JS без сборки)
+Проект: `hermes-kanban-webui` (форк `PriuS2/HermesKanban`, vanilla JS без сборки)
 Макеты направлений: `~/.hermes/cache/scratch/kanban-mockups/{a-board,b-pult,c-feed}.html` (временные, 390px)
 
 ## 1. Зачем
@@ -181,7 +181,7 @@ KPI-плиток, дублирующая счётчики колонок. Плю
   CSS — контракты (наличие вью, ключей i18n, токенов, запретов из 5.3, отсутствие внешних шрифтов).
 - Скриншот-пробы на 390 и 1440 (`scripts/`): нет горизонтального переполнения, вкладки переключают вью,
   `#view=now` открывается, `#task=<id>` открывает drawer.
-- Живая проверка на телефоне через `https://ai.r1290z.ru`.
+- Живая проверка на телефоне через HTTPS-домен развёртывания (secure context обязателен для PWA и push).
 - Статика отдаётся с диска — перезапуск сервиса не требуется; токен `?v=` в `index.html` поднимается один раз
   на задачу, все импорты обязаны использовать один и тот же токен (тест это проверяет).
 
@@ -193,7 +193,7 @@ Operations-панель, массовое создание, AI workflow designer
 ## 10. PWA (этап 2, после переработки UI)
 
 Цель: установка на домашний экран Android/iOS, standalone-режим, офлайн-оболочка и фундамент под web-push.
-HTTPS на `ai.r1290z.ru` уже есть (Let's Encrypt до 17.12.2026) — это обязательное условие выполнено.
+HTTPS на домене развёртывания (Let's Encrypt) — обязательное условие для PWA и push.
 
 - `static/manifest.webmanifest`: `name` «Hermes Kanban», `short_name` «Kanban», `start_url` `/#view=now`,
   `scope` `/`, `display` `standalone`, `background_color` `#0b0c0e`, `theme_color` `#0b0c0e`, `lang` `ru`,

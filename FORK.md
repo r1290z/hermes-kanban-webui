@@ -59,9 +59,9 @@ systemctl --user restart hermes-kanban-webui  # чтобы /api/push/key уви�
 | запрещены в браузере | `Notification.permission === 'denied'`, кнопки нет: разрешение возвращается только в настройках сайта |
 | не поддерживается | нет службы push / secure context |
 
-**Важно:** Push API работает только в secure context. По `http://192.168.144.122:8790`
-браузер честно скажет «не поддерживается» — уведомления включаются на
-`https://ai.r1290z.ru` (или на `http://localhost`). Иконка с домашнего экрана
+**Важно:** Push API работает только в secure context. По `http://<host>:8790`
+браузер честно скажет «не поддерживается» — уведомления включаются на HTTPS-домене
+(или на `http://localhost`). Иконка с домашнего экрана
 (PWA) для Chrome не обязательна, для iOS ≥16.4 — обязательна.
 
 **3. Каталог состояния.** `~/.hermes/kanban-webui/`:
@@ -122,6 +122,6 @@ Chrome в режиме `--headless=new` игнорирует `--window-size` д�
 systemctl --user status hermes-kanban-webui.service
 ```
 
-Открыть: http://192.168.144.122:8790
+Открыть: http://<host>:8790
 
 Токен — в `~/.hermes/kanban-webui.env` (`HERMES_KANBAN_WEBUI_TOKEN`).

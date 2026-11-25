@@ -7,18 +7,19 @@ view, captures the PNG, and reports horizontal overflow.
     KANBAN_TOKEN=... python3 shot_attachments.py TASK_ID OUT_1440 OUT_390
 """
 
-from __future__ import annotations
-
 import asyncio
 import base64
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
 import urllib.request
 
-CHROME = "/home/hermes/.hermes/tools/chromium-1208/chrome-linux64/chrome"
+CHROME = (os.environ.get("PROBE_CHROME")
+          or shutil.which("google-chrome") or shutil.which("chromium")
+          or os.path.expanduser("~/.hermes/tools/chromium-1208/chrome-linux64/chrome"))
 BASE = os.environ.get("KANBAN_WEBUI_BASE", "http://127.0.0.1:8790")
 PORT = 9335
 

@@ -11,12 +11,16 @@ sets the viewport the CSS actually sees.
 import asyncio
 import base64
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
 import urllib.request
 
-CHROME = "/home/hermes/.hermes/tools/chromium-1208/chrome-linux64/chrome"
+CHROME = (os.environ.get("PROBE_CHROME")
+          or shutil.which("google-chrome") or shutil.which("chromium")
+          or os.path.expanduser("~/.hermes/tools/chromium-1208/chrome-linux64/chrome"))
 
 
 async def capture(url: str, out: str, width: int, height: int) -> None:

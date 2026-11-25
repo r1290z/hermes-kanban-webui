@@ -1,6 +1,6 @@
 [Unit]
 Description=KanbanWebUI — отправка web-push по событиям Kanban
-Documentation=file:///home/hermes/projects/hermes-kanban-webui/FORK.md
+Documentation=https://github.com/r1290z/hermes-kanban-webui/blob/main/FORK.md
 After=network.target
 
 [Service]

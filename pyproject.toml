@@ -1,7 +1,7 @@
 [project]
 name = "hermes-kanban-webui"
-version = "0.1.0"
-description = "Standalone Trello-like WebUI for Hermes Kanban"
+version = "0.2.0"
+description = "Standalone Trello-like WebUI for Hermes Kanban (RU/EN/KO, PWA, web-push)"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
@@ -20,7 +20,10 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/PriuS2/HermesKanban"
+Homepage = "https://github.com/r1290z/hermes-kanban-webui"
+Repository = "https://github.com/r1290z/hermes-kanban-webui"
+Issues = "https://github.com/r1290z/hermes-kanban-webui/issues"
+Upstream = "https://github.com/PriuS2/HermesKanban"
 
 [project.optional-dependencies]
 test = ["pytest", "httpx"]

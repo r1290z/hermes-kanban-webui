@@ -11,6 +11,7 @@ import asyncio
 import base64
 import json
 import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -18,8 +19,9 @@ import tempfile
 import time
 import urllib.request
 
-CHROME = os.environ.get("PROBE_CHROME",
-                        "/home/hermes/.hermes/tools/chromium-1208/chrome-linux64/chrome")
+CHROME = (os.environ.get("PROBE_CHROME")
+          or shutil.which("google-chrome") or shutil.which("chromium")
+          or os.path.expanduser("~/.hermes/tools/chromium-1208/chrome-linux64/chrome"))
 
 
 def free_port() -> int:

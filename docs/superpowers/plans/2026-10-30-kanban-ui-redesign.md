@@ -170,7 +170,7 @@ Expected: `390` (без горизонтального переполнения)
 - [ ] **Step 10: Коммит**
 
 ```bash
-cd /home/hermes/projects/hermes-kanban-webui
+cd ~/projects/hermes-kanban-webui
 git add static/design-tokens.css static/style.css static/index.html static/app.js static/i18n.js scripts/probe_ui.py tests/test_ui_shell.py
 git commit -m "UI: тёмные токены, оболочка с вкладками Сейчас/Доска/Лента/Лог, статус ready → «На проверке»"
 ```

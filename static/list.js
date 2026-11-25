@@ -1,9 +1,9 @@
-import { api } from './api.js?v=20261030-9';
-import { t } from './i18n.js?v=20261030-9';
-import { escapeHtml } from './markdown.js?v=20261030-9';
-import { openTaskDrawer } from './drawer.js?v=20261030-9';
-import { state } from './state.js?v=20261030-9';
-import { schedulePulse } from './pulse.js?v=20261030-9';
+import { api } from './api.js?v=20261125-1';
+import { lang, t } from './i18n.js?v=20261125-1';
+import { escapeHtml } from './markdown.js?v=20261125-1';
+import { openTaskDrawer } from './drawer.js?v=20261125-1';
+import { state } from './state.js?v=20261125-1';
+import { schedulePulse } from './pulse.js?v=20261125-1';
 
 const PAGE_SIZE = 100;
 
@@ -97,15 +97,26 @@ export function createMultiSelect(host, config = {}) {
   };
 }
 
+// Дата в списке — короткая и на языке интерфейса: раньше toLocaleString() без
+// локали печатал секунды и следовал языку браузера, а не переключателю RU/EN.
 function formatDate(value) {
   if (!value) return '—';
   const date = new Date(Number(value) * 1000);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString();
+  return date.toLocaleString(lang(), {
+    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit',
+  });
 }
 
 function statusCell(task) {
   return `<span class="list-status"><span class="status-dot ${escapeHtml(task.status || '')}"></span><span>${escapeHtml(t(task.status || ''))}</span></span>`;
+}
+
+// Три счётчика в одной ячейке: прогоны · комментарии · вложения. Отдельными
+// колонками они съедали по 4-8% ширины, и заголовку задачи оставалось 16%.
+function countsCell(task) {
+  const pairs = [['runs', task.run_count], ['comments', task.comment_count], ['attachments', task.attachment_count]];
+  return pairs.map(([key, value]) => `<span title="${escapeHtml(t(key))}" class="list-count-num">${escapeHtml(String(Number(value) || 0))}</span>`).join('');
 }
 
 function rowHtml(task) {
@@ -123,11 +134,8 @@ function rowHtml(task) {
     <td data-label="${escapeHtml(t('tenant'))}">${task.tenant ? escapeHtml(task.tenant) : '<span class="muted">—</span>'}</td>
     <td data-label="${escapeHtml(t('created'))}"><span class="list-date">${escapeHtml(formatDate(task.created_at))}</span></td>
     <td data-label="${escapeHtml(t('listUpdated'))}"><span class="list-date">${escapeHtml(formatDate(task.updated_at))}</span></td>
-    <td data-label="${escapeHtml(t('runs'))}" class="list-count">${escapeHtml(String(task.run_count ?? 0))}</td>
-    <td data-label="${escapeHtml(t('comments'))}" class="list-count">${escapeHtml(String(task.comment_count ?? 0))}</td>
-    <td data-label="${escapeHtml(t('attachments'))}" class="list-count">${escapeHtml(String(task.attachment_count ?? 0))}</td>
+    <td data-label="${escapeHtml(t('listCounts'))}" class="list-counts">${countsCell(task)}</td>
     <td data-label="${escapeHtml(t('listElapsed'))}" class="list-pulse">${task.status === 'running' ? `<span class="pulse-short" data-pulse-id="${escapeHtml(task.id)}" data-pulse-elapsed></span><span class="pulse-full" data-pulse-id="${escapeHtml(task.id)}"></span>` : ''}</td>
-    <td class="list-counts-mobile">${['runs','comments','attachments'].map(key => `<span>${escapeHtml(t(key))}: <b>${escapeHtml(String(task[key === 'runs' ? 'run_count' : key === 'comments' ? 'comment_count' : 'attachment_count'] ?? 0))}</b></span>`).join('')}</td>
   </tr>`;
 }
 
@@ -146,9 +154,7 @@ function headerHtml(sort, dir) {
     <th class="list-th">${escapeHtml(t('tenant'))}</th>
     ${cell('created', t('created'))}
     ${cell('updated', t('listUpdated'))}
-    <th class="list-th">${escapeHtml(t('runs'))}</th>
-    <th class="list-th">${escapeHtml(t('comments'))}</th>
-    <th class="list-th">${escapeHtml(t('attachments'))}</th>
+    <th class="list-th">${escapeHtml(t('listCounts'))}</th>
     <th class="list-th">${escapeHtml(t('listElapsed'))}</th>
   </tr>`;
 }
@@ -160,7 +166,7 @@ function renderRows(tasks, append) {
   const empty = body.querySelector('.list-empty-row');
   if (empty) empty.remove();
   if (!tasks.length && !body.children.length) {
-    body.innerHTML = `<tr class="list-empty-row"><td colspan="11">${escapeHtml(t('listEmpty'))}</td></tr>`;
+    body.innerHTML = `<tr class="list-empty-row"><td colspan="9">${escapeHtml(t('listEmpty'))}</td></tr>`;
     return;
   }
   body.insertAdjacentHTML('beforeend', tasks.map(rowHtml).join(''));
@@ -205,7 +211,7 @@ export async function loadList({ append = false } = {}) {
     console.error(err);
     const body = document.getElementById('listBody');
     if (body && !body.children.length) {
-      body.innerHTML = `<tr class="list-empty-row"><td colspan="11">${escapeHtml(err.message || String(err))}</td></tr>`;
+      body.innerHTML = `<tr class="list-empty-row"><td colspan="9">${escapeHtml(err.message || String(err))}</td></tr>`;
     }
   } finally {
     listState.loading = false;

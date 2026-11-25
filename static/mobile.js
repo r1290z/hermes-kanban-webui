@@ -1,6 +1,6 @@
-import { api } from './api.js?v=20261030-9';
-import { state, toast } from './state.js?v=20261030-9';
-import { t } from './i18n.js?v=20261030-9';
+import { api } from './api.js?v=20261125-1';
+import { state, toast } from './state.js?v=20261125-1';
+import { t } from './i18n.js?v=20261125-1';
 
 // Moving a card is the one thing you do constantly on a phone, and drag-and-drop
 // needs a mouse: touch never fires dragover, so the board had no working move at all.

@@ -1,9 +1,9 @@
-import { t } from './i18n.js?v=20261030-9';
-import { escapeHtml } from './markdown.js?v=20261030-9';
-import { openTaskDrawer } from './drawer.js?v=20261030-9';
-import { attachDragHandlers } from './dragdrop.js?v=20261030-9';
-import { clearDependencyFocus, focusDependencyTask, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261030-9';
-import { schedulePulse } from './pulse.js?v=20261030-9';
+import { t } from './i18n.js?v=20261125-1';
+import { escapeHtml } from './markdown.js?v=20261125-1';
+import { openTaskDrawer } from './drawer.js?v=20261125-1';
+import { attachDragHandlers } from './dragdrop.js?v=20261125-1';
+import { clearDependencyFocus, focusDependencyTask, refreshDependencyOverlay, renderDependencyOverlay, selectDependencyTask } from './dependency-lines.js?v=20261125-1';
+import { schedulePulse } from './pulse.js?v=20261125-1';
 
 // Один DOM — две раскладки (колонки на десктопе, секции на телефоне, CSS).
 // Плотная карточка: id не переносится, метаданные одной строкой, нулевые
@@ -92,6 +92,28 @@ function renderRail(rail, emptyStatuses) {
     .join('');
 }
 
+// Десктоп: доска занимает остаток вьюпорта, поэтому набор карточек растягивал
+// страницу не она, а колонки — они скроллятся внутри себя. Высоту считаем по
+// фактическому верху доски: панель фильтров переносится и её высота не константа.
+function fitBoardHeight(root) {
+  if (!root) return;
+  if (isPhone()) {
+    root.style.removeProperty('height');
+    return;
+  }
+  const top = root.getBoundingClientRect().top;
+  const next = `${Math.max(320, Math.round(window.innerHeight - top - 16))}px`;
+  if (root.style.height !== next) root.style.height = next;
+}
+
+function bindColumnScroll(root) {
+  // Карточки скроллятся внутри колонки — линии связей обязаны перерисоваться,
+  // иначе стрелки остаются на прежних местах.
+  root.querySelectorAll('.cards').forEach(el => {
+    el.addEventListener('scroll', refreshDependencyOverlay, { passive: true });
+  });
+}
+
 function updateScrollHint(root) {
   if (!root) return;
   const canScroll = root.scrollWidth - root.clientWidth - root.scrollLeft > 4;
@@ -102,9 +124,13 @@ function updateScrollHint(root) {
 
 function scrollToSignificant(root, force = false) {
   if (!root || isPhone()) return;
+  // Сначала «живые» статусы. Если их нет (например, всё в «Готово»), едем к
+  // первой непустой колонке: иначе при горизонтальном скролле на 900px экран
+  // открывается одними пустыми дорожками.
   const target = SIGNIFICANT_ORDER
     .map(status => root.querySelector(`.board-column[data-status="${status}"]:not(.is-empty)`))
-    .find(Boolean);
+    .find(Boolean)
+    || root.querySelector('.board-column:not(.is-empty)');
   if (!target) return;
   const key = target.dataset.status || '';
   if (!force && key === lastScrollTarget) return;
@@ -140,6 +166,7 @@ export function renderBoard(data) {
     return `<section class="${classes.join(' ')}" data-status="${escapeHtml(status)}">
       <header><div><h2>${escapeHtml(t(status))}</h2><small class="num">${tasks.length}</small></div><button type="button" class="mini-add" data-status="${escapeHtml(status)}" aria-label="${escapeHtml(t('taskCreate'))}">＋</button></header>
       <div class="drop-placeholder"></div>
+      ${!tasks.length ? '<div class="column-empty" aria-hidden="true"></div>' : ''}
       <div class="cards">${shown.map(card).join('')}</div>
       ${more}
     </section>`;
@@ -183,10 +210,12 @@ export function renderBoard(data) {
   if (!hintBound) {
     hintBound = true;
     root.addEventListener('scroll', () => updateScrollHint(root), { passive: true });
-    window.addEventListener('resize', () => updateScrollHint(root));
+    window.addEventListener('resize', () => { fitBoardHeight(root); updateScrollHint(root); });
     document.getElementById('boardToActive')?.addEventListener('click', () => scrollToSignificant(root, true));
   }
 
+  fitBoardHeight(root);
+  bindColumnScroll(root);
   attachDragHandlers(root);
   renderDependencyOverlay(data);
   scrollToSignificant(root);

@@ -3,10 +3,10 @@
 // Clock discipline: the server's `now` from each response is the base; between
 // polls we interpolate with Date.now() only as a drift offset, so a browser
 // with a wrong clock or timezone can never produce a negative elapsed time.
-import { api } from './api.js?v=20261030-9';
-import { t } from './i18n.js?v=20261030-9';
-import { state } from './state.js?v=20261030-9';
-import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261030-9';
+import { api } from './api.js?v=20261125-1';
+import { t } from './i18n.js?v=20261125-1';
+import { state } from './state.js?v=20261125-1';
+import { formatClock, formatDuration, formatDurationCoarse } from './duration.js?v=20261125-1';
 
 const POLL_MS = 10000;
 

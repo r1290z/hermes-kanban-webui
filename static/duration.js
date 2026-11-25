@@ -1,7 +1,7 @@
 // Single home for human-readable duration formatting ("12 с", "4 мин 05 с",
 // "2 ч 05 мин"). Units come from i18n so the same function reads naturally in
 // RU/EN/KO — no per-view copies.
-import { t } from './i18n.js?v=20261030-9';
+import { t } from './i18n.js?v=20261125-1';
 
 export function formatDuration(seconds) {
   if (seconds === null || seconds === undefined || Number.isNaN(Number(seconds))) return '—';

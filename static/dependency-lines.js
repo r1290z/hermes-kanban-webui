@@ -1,6 +1,6 @@
-import { api } from './api.js?v=20261030-9';
-import { t } from './i18n.js?v=20261030-9';
-import { state, toast } from './state.js?v=20261030-9';
+import { api } from './api.js?v=20261125-1';
+import { t } from './i18n.js?v=20261125-1';
+import { state, toast } from './state.js?v=20261125-1';
 
 const VIEW_MODES = new Set(['focus', 'all', 'blocked', 'off']);
 let currentData = null;
@@ -62,9 +62,19 @@ function activeEdge(edge, id) {
   return Boolean(id && (edge.parent_id === id || edge.child_id === id));
 }
 
+// Карточка вне видимой части доски (колонка прокручена) линию не получает:
+// иначе стрелка уходила бы за пределы панели — на тулбар или в пустоту.
+function onBoard(board, card) {
+  if (!card) return false;
+  const bounds = board.getBoundingClientRect();
+  const rect = card.getBoundingClientRect();
+  return rect.bottom > bounds.top + 2 && rect.top < bounds.bottom - 2;
+}
+
 function filteredEdges(data, board, tasks, id) {
   const cards = visibleCards(board);
-  const raw = (data?.links || []).filter(edge => cards.has(edge.parent_id) && cards.has(edge.child_id));
+  const raw = (data?.links || []).filter(edge => cards.has(edge.parent_id) && cards.has(edge.child_id)
+    && onBoard(board, cards.get(edge.parent_id)) && onBoard(board, cards.get(edge.child_id)));
   const currentMode = mode();
   if (currentMode === 'off') return [];
   if (currentMode === 'focus') return id ? raw.filter(edge => activeEdge(edge, id)) : [];
@@ -433,6 +443,11 @@ export function renderDependencyOverlay(data) {
   const board = boardEl();
   if (!board) return;
   attachBoardListeners(board);
+  scheduleDraw();
+}
+
+// Перерисовать по внешнему событию (прокрутка внутри колонки, ресайз доски).
+export function refreshDependencyOverlay() {
   scheduleDraw();
 }
 

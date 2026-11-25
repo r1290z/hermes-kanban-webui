@@ -15,7 +15,7 @@
 // skipWaiting только по сообщению со страницы: обновление не должно
 // перезагружать интерфейс из-под пальца, баннер показывает update.js.
 
-const VERSION = '20261030-9';
+const VERSION = '20261125-1';
 const CACHE = `kanban-${VERSION}`;
 const ASSET_QUERY = `?v=${VERSION}`;
 

@@ -362,27 +362,35 @@ def test_workflow_static_contract():
         assert css_class in style
 
 
-def test_board_columns_are_fixed_width_with_horizontal_scroll():
-    """≥760px колонки фиксированные 320px и доска листается вбок (спека §4.2);
-    пустой статус сжимается в рейл 40px, чтобы не занимать ширину."""
+def test_board_columns_fill_viewport_and_scroll_inside():
+    """≥760px колонки тянутся flex'ом и делят ширину доски (правка 2026-11-25),
+    карточки скроллятся внутри колонки, а пустой статус занимает узкую дорожку.
+
+    Раньше колонки были жёстко 320px с пустыми рейлами 40px: на 1920px занято
+    было 29% вьюпорта, а колонка из 105 карточек вытягивала страницу на 16 653px.
+    """
     root = Path(__file__).resolve().parents[1]
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
     board = (root / 'static' / 'board.js').read_text(encoding='utf-8')
 
     assert '--kanban-column-count' in board
-    assert "root.style.setProperty('--kanban-column-count'" in board
     board_rule = css_rule(style, '.board')
-    assert 'display: grid' in board_rule
-    assert 'var(--kanban-column-count' in board_rule
+    assert 'display: flex' in board_rule
     assert 'overflow-x: auto' in board_rule
-    # переменной ширины колонки нет — иначе ширина зависит от числа колонок
-    assert 'width: var(--column-width)' not in style
-    assert 'min-width: var(--column-width)' not in style
+    # вертикальный скролл — внутри колонки, иначе доска растёт по tallest колонке
+    assert 'overflow-y: hidden' in board_rule
+    assert 'fitBoardHeight' in board
     column_rule = css_rule(style, '.board-column')
     assert 'position: relative' in column_rule
-    assert 'min-width: 0' in column_rule
-    assert 'width: 320px' in column_rule
-    assert 'width: 40px' in css_rule(style, '.board-column.is-empty')
+    assert 'display: flex' in column_rule
+    assert 'flex-direction: column' in column_rule
+    assert 'flex:' in column_rule and 'max-width' in column_rule
+    assert 'width: 320px' not in column_rule
+    cards_rule = style.split('.cards { position: relative', 1)[1].split('}', 1)[0]
+    assert 'overflow-y: auto' in cards_rule
+    empty_rule = css_rule(style, '.board-column.is-empty')
+    assert 'width: 40px' not in empty_rule
+    assert 'max-width' in empty_rule
 
 
 def test_kpi_row_and_hero_card_removed_from_shell():
@@ -401,7 +409,7 @@ def test_dependency_lines_render_above_column_backgrounds_below_cards():
     root = Path(__file__).resolve().parents[1]
     style = (root / 'static' / 'style.css').read_text(encoding='utf-8')
 
-    assert '.board-column { position: relative; min-width: 0;' in style
+    assert '.board-column { position: relative; display: flex;' in style
     assert '.board-column { position: relative; z-index: 1;' not in style
     assert '.cards { position: relative; z-index: 2;' in style
     task_card_rule = style.split('.task-card {', 1)[1].split('}', 1)[0]

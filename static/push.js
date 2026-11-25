@@ -13,9 +13,9 @@
 //
 // Кнопка живёт в панели «Ещё» рядом с «Установить».
 
-import { request } from './api.js?v=20261030-9';
-import { applyI18n, t } from './i18n.js?v=20261030-9';
-import { toast } from './state.js?v=20261030-9';
+import { request } from './api.js?v=20261125-1';
+import { applyI18n, t } from './i18n.js?v=20261125-1';
+import { toast } from './state.js?v=20261125-1';
 
 const STATES = {
   on: 'pushOn',
